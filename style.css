@@ -6,7 +6,7 @@
 }
 
 body {
-    background-image: url('https://images.unsplash.com/photo-1559767940-6f9e698e6db7'); /* You can replace this */
+    background-image: url('https://images.unsplash.com/photo-1559767940-6f9e698e6db7');
     background-size: cover;
     background-position: center;
     height: 100vh;
@@ -27,15 +27,6 @@ body {
 .login-form {
     flex: 1;
     padding: 40px;
-}
-
-.login-form h2 {
-    margin-bottom: 10px;
-}
-
-.login-form p {
-    margin-bottom: 30px;
-    color: #666;
 }
 
 label {
@@ -85,29 +76,13 @@ input[type="password"] {
     flex: 1;
     background: rgba(0, 255, 0, 0.3); /* Light green transparent */
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
     padding: 20px;
 }
 
-.logo {
-    width: 100px;
-    margin-bottom: 20px;
-}
-
-.right-side h1 {
-    font-size: 2.5em;
-    margin-bottom: 5px;
-}
-
-.right-side h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-}
-
-.right-side p {
-    font-size: 1.2em;
-    color: #333;
+.center-logo {
+    max-width: 80%;
+    max-height: 80%;
+    object-fit: contain;
 }
