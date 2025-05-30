@@ -1,0 +1,114 @@
+/* Center page */
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif;
+}
+
+/* Container wraps form + image */
+.container {
+  display: flex;
+  width: 800px;
+  max-width: 100%;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Left: login form */
+.login-form {
+  flex: 1;
+  padding: 40px 30px;
+}
+
+.login-form form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 4px;
+  margin-top: 16px;
+}
+
+.required {
+  color: red;
+  margin-left: 4px;
+}
+
+input[type="email"],
+input[type="password"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.keep-logged {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.keep-logged input[type="checkbox"] {
+  margin: 0 6px 0 0;
+  transform: translateY(1px); /* Aligns checkbox vertically */
+}
+
+.forgot-password {
+  font-size: 0.9rem;
+  color: red;
+  text-decoration: none;
+  line-height: 1;
+  margin-top: 2px; /* Optional fine-tuning */
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+
+/* Submit button */
+.submit-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: #218838;
+}
+
+/* Right: image panel */
+.right-side {
+  flex: 1;
+  background-color: #a8f5a1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-logo {
+  max-width: 80%;
+  height: auto;
+}
