@@ -92,6 +92,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               type="button"
               className="aspect-square rounded-full border border-gray-300 flex items-center justify-center hover:bg-blue-100 transition-colors"
               aria-label="Facebook"
+              onClick={() => window.open('https://www.facebook.com/BelantaraFoundation/', '_blank', 'noopener,noreferrer')}
             >
               <FontAwesomeIcon icon={faFacebook} size="lg" className="text-blue-600" />
             </button>
@@ -100,6 +101,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               type="button"
               className="aspect-square rounded-full border border-gray-300 flex items-center justify-center hover:bg-blue-50 transition-colors"
               aria-label="Twitter"
+              onClick={() => window.open('https://x.com/belantara', '_blank', 'noopener,noreferrer')}
             >
               <FontAwesomeIcon icon={faTwitter} size="lg" className="text-blue-400" />
             </button>
@@ -108,19 +110,20 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               type="button"
               className="aspect-square rounded-full border border-gray-300 flex items-center justify-center hover:bg-blue-50 transition-colors"
               aria-label="LinkedIn"
+              onClick={() => window.open('https://www.linkedin.com/company/belantara-foundation/about/', '_blank', 'noopener,noreferrer')}
             >
               <FontAwesomeIcon icon={faLinkedin} size="lg" className="text-blue-800" />
             </button>
 
-            <a
-            href="https://www.instagram.com/belantara_found/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="aspect-square rounded-full border border-gray-300 flex items-center justify-center hover:bg-pink-50 transition-colors"
-            aria-label="Instagram"
-            >
-            <FontAwesomeIcon icon={faInstagram} size="lg" className="text-pink-600" />
-            </a>
+            <button
+                type="button"
+                className="aspect-square rounded-full border border-gray-300 flex items-center justify-center hover:bg-pink-50 transition-colors"
+                aria-label="Instagram"
+                onClick={() => window.open('https://www.instagram.com/belantara_found/', '_blank', 'noopener,noreferrer')}
+                >
+                <FontAwesomeIcon icon={faInstagram} size="lg" className="text-pink-600" />
+            </button>
+
 
           </div>
 

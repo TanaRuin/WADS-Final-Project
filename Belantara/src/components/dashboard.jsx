@@ -68,7 +68,6 @@ const Dashboard = () => {
       {/* Dashboard Content */}
       {!loading && !error && (
         <>
-          {/* Three sections on top */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
             {/* Total Tickets Card */}
             <div className="bg-white rounded-lg shadow p-4 lg:col-span-1">
@@ -150,7 +149,6 @@ const Dashboard = () => {
                       ))}
                     </Pie>
 
-                    {/* Centered Text */}
                     <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" dy="-20">
                       <tspan fontSize="18" fontWeight="bold" fill="#333">
                         {dashboardData.priorityData.reduce((sum, item) => sum + item.value, 0)}
@@ -187,7 +185,6 @@ const Dashboard = () => {
                       ))}
                     </Pie>
 
-                    {/* Centered text */}
                     <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" dy="-20">
                       <tspan fontSize="18" fontWeight="bold" fill="#333">
                         {dashboardData.statusData.reduce((sum, item) => sum + item.value, 0)}
@@ -203,7 +200,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          {/* Monthly resolution chart at the bottom */}
+          {/* Monthly resolution chart */}
           <div className="bg-white rounded-lg shadow p-4">
             <h3 className="text-lg font-medium text-gray-700 mb-4">Total Resolved and Unresolved Tickets by Month</h3>
             <div className="h-64 md:h-96">

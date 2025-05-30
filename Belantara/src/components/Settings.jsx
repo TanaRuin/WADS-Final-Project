@@ -70,7 +70,7 @@ const Settings = () => {
   const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // Password change logic
+  // Password change 
   if (profileData.changePassword || profileData.confirmPassword) {
     if (profileData.changePassword !== profileData.confirmPassword) {
       alert("Passwords do not match!");
@@ -97,7 +97,6 @@ const Settings = () => {
   try {
     setUpdating(true);
 
-    // Upload image if there's a selected file
     if (selectedFile) {
       const formData = new FormData();
       formData.append('profileImage', selectedFile);
@@ -106,8 +105,8 @@ const Settings = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      setProfileImage(imageRes.data.userdata.profileImage); // Update profile image in state
-      setSelectedFile(null); // Clear selected file after upload
+      setProfileImage(imageRes.data.userdata.profileImage); 
+      setSelectedFile(null); 
     }
 
     // Update other profile info
@@ -264,7 +263,7 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* Password Change Card - Full Width */}
+          {/* Password Change Card */}
           <div className="lg:col-span-3 bg-white rounded-lg shadow p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-700 flex items-center">
