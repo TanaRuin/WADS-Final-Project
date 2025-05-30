@@ -1,35 +1,32 @@
+const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-const { sequelize } = require("../database");
 
-const Comment = sequelize.define("Comment", {
-    commentId: {
-        type: String,
-        primaryKey: true,
-        defaultValue: () => uuidv4(),
-    },
-    ticketId: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    userId: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    content: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-     createdAt: {
+const CommentSchema = new mongoose.Schema({
+  commentId: {
+    type: String,
+    default: uuidv4,
+    unique: true
+  },
+  ticketId: {
+    type: String,
+    required: true
+  },
+  userId: {
+    type: String,
+    required: true
+  },
+  content: {
+    type: String,
+    required: true
+  },
+  createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
-    timestamps: true,
-    updatedAt: false 
+  timestamps: true
 });
 
+const Comment = mongoose.model("Comment", CommentSchema);
 
 module.exports = Comment;

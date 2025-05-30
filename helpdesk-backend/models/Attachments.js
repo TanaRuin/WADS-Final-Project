@@ -1,36 +1,32 @@
+const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
-const { sequelize, DataTypes } = require("../database");
 
-const Attachment = sequelize.define("Attachment", {
-    attachmentId: {
-        type: String,
-        primaryKey: true,
-        defaultValue: () => uuidv4(),
-    },
-    ticketId: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    fileName: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    filePath: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-     createdAt: {
+const AttachmentSchema = new mongoose.Schema({
+  attachmentId: {
+    type: String,
+    default: uuidv4,
+    unique: true
+  },
+  ticketId: {
+    type: String,
+    required: true
+  },
+  fileName: {
+    type: String,
+    required: true
+  },
+  filePath: {
+    type: String,
+    required: true
+  },
+  createdAt: {
     type: Date,
     default: Date.now
   }
 }, {
-    timestamps: true,
-    updatedAt: false
+  timestamps: true
 });
 
-
+const Attachment = mongoose.model("Attachment", AttachmentSchema);
 
 module.exports = Attachment;

@@ -1,15 +1,13 @@
-const { User } = require('../models/Users');
+const { User } = require('../models/Users');  // Make sure this exports the Mongoose model
 const bcrypt = require('bcrypt');
-
 
 // Get user profile
 const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const user = await User.findByPk(userId, {
-      attributes: ['firstName', 'lastName', 'email', 'jobRole', 'description', 'profileImage']
-    });
+    // In mongoose, use findById and select fields with .select()
+    const user = await User.findById(userId).select('firstName lastName email jobRole description profileImage');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -17,7 +15,7 @@ const getUserProfile = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: user
+      userdata: user
     });
   } catch (error) {
     console.error('Error getting user profile:', error);
@@ -35,7 +33,8 @@ const updateUserProfile = async (req, res) => {
     const userId = req.user.userId;
     const { description } = req.body; 
 
-    const user = await User.findByPk(userId);
+    // Find user by id
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -50,9 +49,8 @@ const updateUserProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      data: {
+      userdata: {
         description: user.description,
-        jobRole: user.jobRole 
       }
     });
   } catch (error) {
@@ -65,12 +63,11 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-
 // Change password
 const changePassword = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { newPassword, confirmPassword } = req.body;
 
     if (newPassword !== confirmPassword) {
       return res.status(400).json({
@@ -79,21 +76,12 @@ const changePassword = async (req, res) => {
       });
     }
 
-    const user = await User.findByPk(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
-      });
-    }
-
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Current password is incorrect'
       });
     }
 
@@ -129,7 +117,7 @@ const uploadProfileImage = async (req, res) => {
       });
     }
 
-    const user = await User.findByPk(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -144,7 +132,7 @@ const uploadProfileImage = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Profile image uploaded successfully',
-      data: {
+      userdata: {
         profileImage: user.profileImage
       }
     });
@@ -158,7 +146,6 @@ const uploadProfileImage = async (req, res) => {
   }
 };
 
-// Export all controller functions
 module.exports = {
   getUserProfile,
   updateUserProfile,

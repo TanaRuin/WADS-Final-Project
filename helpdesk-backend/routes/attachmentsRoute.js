@@ -8,7 +8,8 @@ const {
   deleteAttachment
 } = require('../controllers/attachmentController');
 
-const upload = require('../middleware/uploadAttachments'); // ✅ import multer middleware
+// Importing mmiddleware
+const upload = require('../middleware/uploadAttachments');
 
 // Upload file to ticket
 router.post('/upload/:ticketId', upload.single('file'), uploadAttachment);

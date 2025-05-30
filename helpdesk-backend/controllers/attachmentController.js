@@ -2,34 +2,27 @@ const { v4: uuidv4 } = require("uuid");
 const Attachment = require("../models/Attachments");
 const Ticket = require("../models/Tickets");
 const fs = require("fs");
-
-
+const path = require("path");
 
 // Get all attachments for a specific ticket
 const getTicketAttachments = async (req, res) => {
     try {
         const { ticketId } = req.params;
         
-        // Verify that the ticket exists
-        const ticket = await Ticket.findOne({ 
-            where: { ticketId } 
-        });
+        // Verify that the ticket exists using custom ticketId
+        const ticket = await Ticket.findOne({ ticketId });
         
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found." });
         }
         
         // Fetch attachments for the ticket
-        const attachments = await Attachment.findAll({
-            where: { ticketId }
-        });
+        const attachments = await Attachment.find({ ticketId }).lean();
         
         // Format attachments to match frontend expectations
         const formattedAttachments = attachments.map(attachment => {
-            const attachmentData = attachment.toJSON ? attachment.toJSON() : attachment;
-            const fileExtension = path.extname(attachmentData.fileName).toLowerCase();
+            const fileExtension = path.extname(attachment.fileName).toLowerCase();
             
-            // Determine file type based on extension
             let fileType = 'file';
             if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(fileExtension)) {
                 fileType = 'image';
@@ -42,10 +35,10 @@ const getTicketAttachments = async (req, res) => {
             }
             
             return {
-                id: attachmentData.attachmentId,
-                name: attachmentData.fileName,
+                id: attachment.attachmentId,   // custom id field
+                name: attachment.fileName,
                 type: fileType,
-                url: `/api/attachments/${attachmentData.attachmentId}`
+                url: `/api/attachments/${attachment.attachmentId}`  // use custom id here
             };
         });
         
@@ -57,8 +50,6 @@ const getTicketAttachments = async (req, res) => {
 
 // Upload an attachment to a ticket
 const uploadAttachment = async (req, res) => {
-    // Note: This controller should be used with the multer middleware
-    // Example usage in routes: router.post('/tickets/:ticketId/attachments', upload.single('file'), uploadAttachment);
     try {
         const { ticketId } = req.params;
         
@@ -66,29 +57,26 @@ const uploadAttachment = async (req, res) => {
             return res.status(400).json({ message: "No file uploaded." });
         }
         
-        // Check if ticket exists
-        const ticket = await Ticket.findOne({ 
-            where: { ticketId } 
-        });
+        // Check if ticket exists using custom ticketId
+        const ticket = await Ticket.findOne({ ticketId });
         
         if (!ticket) {
-            // Delete the uploaded file if ticket doesn't exist
             fs.unlinkSync(req.file.path);
             return res.status(404).json({ message: "Ticket not found." });
         }
         
-        // Create new attachment record
-        const newAttachment = await Attachment.create({
-            attachmentId: uuidv4(),
+        // Create new attachment with custom attachmentId
+        const newAttachment = new Attachment({
+            attachmentId: uuidv4(),  // custom id instead of _id
             ticketId,
             fileName: req.file.originalname,
             filePath: req.file.path
         });
         
-        const attachmentData = newAttachment.toJSON ? newAttachment.toJSON() : newAttachment;
-        const fileExtension = path.extname(attachmentData.fileName).toLowerCase();
+        await newAttachment.save();
         
-        // Determine file type based on extension
+        const fileExtension = path.extname(newAttachment.fileName).toLowerCase();
+        
         let fileType = 'file';
         if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(fileExtension)) {
             fileType = 'image';
@@ -100,17 +88,15 @@ const uploadAttachment = async (req, res) => {
             fileType = 'text';
         }
         
-        // Format the response
         const formattedAttachment = {
-            id: attachmentData.attachmentId,
-            name: attachmentData.fileName,
+            id: newAttachment.attachmentId,
+            name: newAttachment.fileName,
             type: fileType,
-            url: `/api/attachments/${attachmentData.attachmentId}`
+            url: `/api/attachments/${newAttachment.attachmentId}`
         };
         
         res.status(201).json(formattedAttachment);
     } catch (error) {
-        // If there was an error and a file was uploaded, delete it
         if (req.file) {
             fs.unlinkSync(req.file.path);
         }
@@ -123,15 +109,13 @@ const downloadAttachment = async (req, res) => {
     try {
         const { attachmentId } = req.params;
         
-        const attachment = await Attachment.findOne({
-            where: { attachmentId }
-        });
+        // Find by custom attachmentId
+        const attachment = await Attachment.findOne({ attachmentId });
         
         if (!attachment) {
             return res.status(404).json({ message: "Attachment not found." });
         }
         
-        // Send the file as a download
         res.download(attachment.filePath, attachment.fileName, (err) => {
             if (err) {
                 return res.status(500).json({ message: "Error downloading file." });
@@ -147,21 +131,18 @@ const deleteAttachment = async (req, res) => {
     try {
         const { attachmentId } = req.params;
         
-        const attachment = await Attachment.findOne({
-            where: { attachmentId }
-        });
+        // Find by custom attachmentId
+        const attachment = await Attachment.findOne({ attachmentId });
         
         if (!attachment) {
             return res.status(404).json({ message: "Attachment not found." });
         }
         
-        // Check if file exists and delete it
         if (fs.existsSync(attachment.filePath)) {
             fs.unlinkSync(attachment.filePath);
         }
         
-        // Delete the database record
-        await attachment.destroy();
+        await attachment.deleteOne();
         
         res.status(200).json({ message: "Attachment deleted successfully." });
     } catch (error) {

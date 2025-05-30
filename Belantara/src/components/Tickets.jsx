@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, RefreshCw, Edit, ChevronLeft, PaperclipIcon, X, Check, Send, ChevronUp, ChevronDown } from 'lucide-react';
 
-export default function TicketsPage() {
+const Tickets = () => {
   // State for tickets data
   const [tickets, setTickets] = useState([
     { 
@@ -684,3 +684,4 @@ export default function TicketsPage() {
     </div>
   );
 }
+export default Tickets;

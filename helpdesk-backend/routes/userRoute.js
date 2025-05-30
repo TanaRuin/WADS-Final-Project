@@ -7,9 +7,9 @@ const upload = require('../middleware/uploadProfilePic');
 
 
 
-router.get('getProfile', getUserProfile);
-router.put('updateProfile', updateUserProfile);
+router.get('/getProfile', getUserProfile);
+router.put('/updateProfile', updateUserProfile);
 router.post('/change-password', changePassword);
-router.post('profile-image', upload.single('profileImage'), uploadProfileImage);
+router.post('/profile-image', upload.single('profileImage'), uploadProfileImage);
 
 module.exports = router;

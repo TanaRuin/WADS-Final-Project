@@ -7,9 +7,8 @@ const { v4: uuidv4 } = require('uuid');
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads');
+    const uploadDir = path.join(__dirname, '../uploads/attachment-belantara');
 
-    // Create directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -24,7 +23,7 @@ const storage = multer.diskStorage({
 
 // Create multer upload instance
 const upload = multer({
-  storage: storage,
+  storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB
   }

@@ -1,53 +1,41 @@
-const { v4: uuidv4 } = require("uuid");
-const { sequelize } = require("../database");
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Ticket = sequelize.define("Ticket", {
-    ticketId: {
-        type: String,
-        primaryKey: true,
-        defaultValue: () => uuidv4(),
-    },
-    userId: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    Issue:{
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    description: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    category: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    priority: {
-        type: String,
-        allowNull: false,
-        required: true
-    },
-    status: {
-        type: String,
-        allowNull: false,
-        defaultValue: 'open',
-        required: true
-    },
-     createdAt: {
-    type: Date,
-    default: Date.now
+const ticketSchema = new mongoose.Schema({
+  ticketId: {
+    type: String,
+    default: uuidv4,
+    unique: true
   },
-     updatedAt: {
-    type: Date,
-    default: Date.now
+  userId: {
+    type: String,
+    required: true
+  },
+  Issue: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  category: {
+    type: String,
+    required: true
+  },
+  priority: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    default: 'open',
+    required: true
   }
 }, {
-    timestamps: true
+  timestamps: true 
 });
+
+const Ticket = mongoose.model('Ticket', ticketSchema);
 
 module.exports = Ticket;
