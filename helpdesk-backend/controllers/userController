@@ -24,7 +24,7 @@ const googleLogin = async (req, res) => {
       email, 
       given_name: firstName, 
       family_name: lastName,
-      sub: googleId // Google's unique user ID
+      sub: googleId 
     } = payload;
 
     // Check if user exists by email
@@ -45,12 +45,11 @@ const googleLogin = async (req, res) => {
 
       user = new User({
         userId: uuidv4(),
-        username, // Add generated username
+        username, 
         firstName: firstName || '',
         lastName: lastName || '',
         email,
         accessLevel: 'user',
-        // Don't set password for OAuth users
       });
 
       await user.save();
@@ -64,7 +63,6 @@ const googleLogin = async (req, res) => {
         );
       } catch (emailError) {
         console.error('Welcome email failed:', emailError);
-        // Don't fail the login if email fails
       }
     }
 
@@ -73,7 +71,7 @@ const googleLogin = async (req, res) => {
     // Set refresh token cookie
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       sameSite: 'Lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -106,7 +104,7 @@ const googleLogin = async (req, res) => {
     res.status(401).json({ 
       success: false, 
       message: 'Google authentication failed. Please try again.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error:  undefined
     });
   }
 };
@@ -149,6 +147,7 @@ const register = async (req, res) => {
   }
 };
 
+
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -177,6 +176,7 @@ const login = async (req, res) => {
         accessLevel: user.accessLevel,
         firstName: user.firstName,
         lastName: user.lastName,
+        accessLevel: user.accessLevel,
       }
     });
   } catch (error) {
@@ -226,10 +226,30 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+const checkResetToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    res.status(200).json({ success: true, message: 'Valid token' });
+  } catch (error) {
+    console.error('Check reset token error:', error);
+    res.status(500).json({ success: false, message: 'Something went wrong' });
+  }
+};
+
 const resetPassword = async (req, res) => {
   try {
     const { token } = req.params; 
-    const { newPassword } = req.body;
+    const { password } = req.body;
 
     // Find user with matching reset token and valid expiry
     const user = await User.findOne({
@@ -243,7 +263,7 @@ const resetPassword = async (req, res) => {
 
     // Hash new password
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash( password, salt);
 
     // Clear reset token and expiry
     user.resetPasswordToken = undefined;
@@ -435,8 +455,10 @@ module.exports = {
   register,
   login,
   refreshToken,
+  checkResetToken,
   logout,
   googleLogin,
   forgotPassword,
   resetPassword,
+
 };

@@ -4,6 +4,7 @@ import './App.css';
 import AdminPage from './pages/admin';
 import AuthPage from './pages/auth'; 
 import ResetPasswordPage from './pages/reset';
+import Dashboard from './pages/dash';
 
 
 const App = () => {
@@ -19,9 +20,10 @@ const App = () => {
         <Route path="/admin/*" element={<AdminPage />} />
 
         {/* Default Redirect */}
-        <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
         {/*Reset Page Route*/}
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         
       </Routes>
     </Router>

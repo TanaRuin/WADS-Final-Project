@@ -13,6 +13,7 @@ const {
   googleLogin,
   forgotPassword,
   resetPassword,
+  checkResetToken,
 } = require('../controllers/userController');
 
 const { authenticate } = require('../middleware/authMiddleware');
@@ -28,6 +29,7 @@ router.post('/logout', logout);
 // Password reset
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
+router.get('/reset-password/:token', checkResetToken);
 
 // Protected user routes
 router.get('/getProfile', authenticate, getUserProfile);

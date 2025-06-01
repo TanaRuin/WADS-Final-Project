@@ -10,17 +10,18 @@ const {
 
 // Importing mmiddleware
 const upload = require('../middleware/uploadAttachments');
+const { authenticate } = require('../middleware/authMiddleware');
 
 // Upload file to ticket
-router.post('/upload/:ticketId', upload.single('file'), uploadAttachment);
+router.post('/upload/:ticketId', authenticate, upload.single('file'), uploadAttachment);
 
 // Get all attachments for a ticket
-router.get('/getall/:ticketId', getTicketAttachments);
+router.get('/getall/:ticketId', authenticate, getTicketAttachments);
 
 // Download attachment
-router.get('/download/:attachmentId', downloadAttachment);
+router.get('/download/:attachmentId', authenticate, downloadAttachment);
 
 // Delete attachment
-router.delete('/delete/:attachmentId', deleteAttachment);
+router.delete('/delete/:attachmentId', authenticate, deleteAttachment);
 
 module.exports = router;

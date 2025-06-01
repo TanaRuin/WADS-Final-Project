@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Ticket } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
-import axios from 'axios';
+import api from '../api/axiosInstance';
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
-  // State for dashboard data
+
   const [dashboardData, setDashboardData] = useState({
     total: 0,
     recent: {
@@ -26,21 +25,19 @@ const Dashboard = () => {
     monthlyData: []
   });
 
-  // Fetch dashboard data from the backend
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
-        const response = await axios.get('http://localhost:5000/api/dashboard/get', {
-
-        });
+        // Use your custom axios instance here:
+        const response = await api.get('/dashboard/get');
 
         setDashboardData(response.data);
         setError(null);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again later.');
+        console.error(err);
+        setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }

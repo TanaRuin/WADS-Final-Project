@@ -24,10 +24,11 @@ function AuthPage({ view = 'login' }) {
     const initializeGoogle = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           callback: handleGoogleResponse,
           auto_select: false,
           cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: true
         });
         setGoogleLoaded(true);
       } else {
@@ -60,19 +61,19 @@ function AuthPage({ view = 'login' }) {
     }
 
     try {
-      const response = await axios.post('/api/user/login', {
+      const response = await axios.post('http://localhost:5000/api/user/login', {
         username,
         password,
       });
 
-      const { token, user, accessLevel } = response.data;
+      const { accessToken, userdata } = response.data;
 
-      // Store the token in localStorage for future requests
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Store only what you need
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('accessLevel', userdata.accessLevel); 
 
-      // Redirect based on access level or user role
-      if (accessLevel === 'admin' || user?.accessLevel === 'admin') {
+      // Redirect based on access level
+      if (userdata.accessLevel === 'admin') {
         navigate('/admin/dashboard');
       } else {
         navigate('/dashboard');
@@ -115,7 +116,7 @@ function AuthPage({ view = 'login' }) {
     }
 
     try {
-      const response = await axios.post('/api/user/register', {
+      await axios.post('http://localhost:5000/api/user/register', {
         firstName,
         lastName,
         username,
@@ -123,14 +124,9 @@ function AuthPage({ view = 'login' }) {
         password,
       });
 
-      const { token, user } = response.data;
-
-      // Store the token in localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
-
       // Redirect to dashboard after successful registration
-      navigate('/dashboard');
+      alert("Register Successful")
+      navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
@@ -139,47 +135,45 @@ function AuthPage({ view = 'login' }) {
   };
 
   const handleForgotPasswordSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setError('');
+  setLoading(true);
+
+  const identifier = e.target.identifier.value.trim();
+
+  if (!identifier) {
+    setError('Please enter your email or username');
+    setLoading(false);
+    return;
+  }
+
+  try {
+    await axios.post('http://localhost:5000/api/user/forgot-password', { identifier });
     setError('');
-    setLoading(true);
-    
-    const email = e.target.email.value.trim();
+    alert('Password reset link has been sent to your email');
+    changeView('login');
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
-    if (!email) {
-      setError('Please enter your email address');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      await axios.post('/api/user/forgot-password', { email });
-      setError(''); 
-      alert('Password reset link has been sent to your email');
-      changeView('login');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleResponse = async (response) => {
     setLoading(true);
     try {
-      const backendResponse = await axios.post('/api/user/google-login', {
+      const backendresponse = await axios.post('http://localhost:5000/api/user/google-login', {
         idToken: response.credential
       });
 
-      const { token, user } = backendResponse.data;
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      const { accessToken} = backendresponse.data;
+
+      localStorage.setItem('accessToken', accessToken);
       
-      // Redirect based on user role
-      if (user.accessLevel === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+ 
+      navigate('/dashboard');
+
     } catch (err) {
       setError(err.response?.data?.message || 'Google login failed. Please try again.');
     } finally {
@@ -192,7 +186,6 @@ function AuthPage({ view = 'login' }) {
       setError('');
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // If one-tap doesn't work, show the button
           console.log('One-tap sign-in not available, using button flow');
         }
       });
@@ -419,22 +412,22 @@ function AuthPage({ view = 'login' }) {
 
   const renderForgotPasswordForm = () => (
     <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-      {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
+  {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
 
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-          Email<span className="text-red-500">*</span>
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          placeholder="Enter your email address"
-          required
-          disabled={loading}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-        />
-      </div>
+  <div>
+    <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-1">
+      Email or Username<span className="text-red-500">*</span>
+    </label>
+    <input
+      type="text"
+      id="identifier"
+      name="identifier"
+      placeholder="Enter your email address or username"
+      required
+      disabled={loading}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+    />
+  </div>
 
       <button
         type="submit"

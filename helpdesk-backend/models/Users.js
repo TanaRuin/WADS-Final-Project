@@ -66,16 +66,11 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { 
     type: Date 
   },
-  // Add fields to track OAuth users
-  isOAuthUser: {
-    type: Boolean,
-    default: false
-  },
-  oauthProvider: {
-    type: String,
-    enum: ['google'],
-    default: null
-  }
+  isVerified: { type: Boolean, default: false },
+verificationCode: { type: String },
+verificationCodeExpiry: { type: Date }
+
+
 }, {
   timestamps: true 
 });

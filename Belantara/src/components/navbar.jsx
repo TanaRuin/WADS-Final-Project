@@ -3,6 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faTwitter, faLinkedin, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import belantaraImage from '../assets/belantara.png';
+import axios from 'axios';
+
+
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -12,6 +15,20 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     navigate(path);
     setSidebarOpen(false);
   };
+  const handleLogout = async () => {
+  try {
+    await axios.post('http://localhost:5000/api/user/logout', {}, {
+      withCredentials: true,
+    });
+
+    localStorage.removeItem('accessToken');
+
+    navigate('/login');
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
+
 
   return (
     <>
@@ -130,6 +147,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           <button
             className="text-white font-medium px-4 py-2 rounded-lg w-full transition-colors hover:bg-red-700"
             style={{ backgroundColor: '#dc2626' }}
+            onClick={handleLogout}
           >
             Logout
           </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Camera, User, Lock, FileText } from 'lucide-react';
+import api from '../api/axiosInstance';
 
 const Settings = () => {
   const [loading, setLoading] = useState(true);
@@ -21,18 +22,23 @@ const Settings = () => {
 
   const [profileImage, setProfileImage] = useState(null);
 
-  // Load user profile on mount
+  // Load user profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('http://localhost:5000/api/user/getProfile');
+        const res = await api.get('/user/getProfile');
         setProfileData(prev => ({
-          ...prev,
-          ...res.data.userdata,
-          changePassword: '',
-          confirmPassword: '',
-        }));
+        ...prev,
+        firstName: res.data.userdata.firstName || '',
+        lastName: res.data.userdata.lastName || '',
+        email: res.data.userdata.email || '',
+        accessLevel: res.data.userdata.accessLevel || '',
+        description: res.data.userdata.description || '',
+        profileImage: res.data.userdata.profileImage || '',
+        changePassword: '',
+        confirmPassword: '',
+      }));
 
         if (res.data.userdata.profileImage) {
           setProfileImage(res.data.userdata.profileImage);
@@ -79,7 +85,7 @@ const Settings = () => {
 
     try {
       setUpdating(true);
-      await axios.put('http://localhost:5000/api/user/changePassword', {
+      await api.put('/user/changePassword', {
         newPassword: profileData.changePassword,
         confirmPassword: profileData.confirmPassword
       });
@@ -101,7 +107,7 @@ const Settings = () => {
       const formData = new FormData();
       formData.append('profileImage', selectedFile);
 
-      const imageRes = await axios.post('http://localhost:5000/api/user/profile-image', formData, {
+      const imageRes = await api.post('/user/profile-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -114,7 +120,7 @@ const Settings = () => {
       description: profileData.description,
     };
 
-    const res = await axios.put('http://localhost:5000/api/user/updateProfile', payload);
+    const res = await api.put('/user/updateProfile', payload);
     alert("Profile updated successfully!");
     setProfileData(prev => ({ ...prev, ...res.data }));
   } catch (error) {

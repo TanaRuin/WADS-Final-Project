@@ -466,7 +466,7 @@ const Tickets = () => {
             )}
           </div>
           
-          {/* Right column - Comments section */}
+          {/*Comments section */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow h-full flex flex-col">
               <div className="p-4 border-b border-gray-200">

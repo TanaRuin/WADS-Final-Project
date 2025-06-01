@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import belantaraImage from '../assets/imagesbelantara.png';
 
 function ResetPasswordPage() {
-  const { token } = useParams(); 
+  const { token } = useParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -13,14 +14,13 @@ function ResetPasswordPage() {
     confirmPassword: ''
   });
 
-  // Verify token when component mounts
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await fetch(`/api/verify-reset-token/${token}`);
-        const data = await response.json();
-        
-        if (data.success) {
+        // Call the backend token verification endpoint with axios GET
+        const response = await axios.get(`http://localhost:5000/api/user/reset-password/${token}`);
+
+        if (response.data.success) {
           setIsValidToken(true);
         } else {
           setIsValidToken(false);
@@ -77,33 +77,33 @@ function ResetPasswordPage() {
     }
 
     try {
-      const response = await fetch('/api/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Send POST request to reset password with axios
+      const response = await axios.post(
+        `http://localhost:5000/api/user/reset-password/${token}`,
+        {
           token,
           password: formData.password
-        }),
-      });
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.data.success) {
         setMessage({
           type: 'success',
           text: 'Password reset successfully! Redirecting to login...'
         });
-        
-        // Redirect to login after 2 seconds
+
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
         setMessage({
           type: 'error',
-          text: data.message || 'Failed to reset password'
+          text: response.data.message || 'Failed to reset password'
         });
       }
     } catch (error) {
@@ -117,7 +117,6 @@ function ResetPasswordPage() {
     }
   };
 
-  // Show loading while verifying token
   if (isValidToken === null) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen">
@@ -138,7 +137,6 @@ function ResetPasswordPage() {
     );
   }
 
-  // Show error if token is invalid
   if (isValidToken === false) {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen">
@@ -177,13 +175,14 @@ function ResetPasswordPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Display success/error messages */}
             {message.text && (
-              <div className={`p-3 rounded-md text-sm ${
-                message.type === 'success' 
-                  ? 'bg-green-50 text-green-700 border border-green-200' 
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}>
+              <div
+                className={`p-3 rounded-md text-sm ${
+                  message.type === 'success'
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
                 {message.text}
               </div>
             )}
@@ -222,8 +221,8 @@ function ResetPasswordPage() {
               />
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isLoading}
               className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: isLoading ? '#9ca3af' : '#2563eb' }}
@@ -235,8 +234,8 @@ function ResetPasswordPage() {
 
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Remember your password? 
-                <a 
+                Remember your password?
+                <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
@@ -251,7 +250,7 @@ function ResetPasswordPage() {
           </form>
         </div>
       </div>
-      
+
       <div className="flex-1 flex items-center justify-center p-4 lg:p-8 bg-gray-50">
         <img
           src={belantaraImage}
