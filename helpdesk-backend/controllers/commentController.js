@@ -7,7 +7,6 @@ const getTicketComments = async (req, res) => {
     try {
         const { ticketId } = req.params;
 
-        // Find ticket by ticketId field (not _id)
         const ticket = await Ticket.findOne({ ticketId });
 
         if (!ticket) {

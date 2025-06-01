@@ -9,9 +9,9 @@ const userSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-    required: true,
+    trim: true,
     unique: true,
-    trim: true
+    sparse: true, 
   },
   email: {
     type: String,
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+  
   },
   firstName: {
     type: String,
@@ -59,10 +59,28 @@ const userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
     default: null
+  },
+  resetPasswordToken: { 
+    type: String 
+  },
+  resetPasswordExpires: { 
+    type: Date 
+  },
+  // Add fields to track OAuth users
+  isOAuthUser: {
+    type: Boolean,
+    default: false
+  },
+  oauthProvider: {
+    type: String,
+    enum: ['google'],
+    default: null
   }
 }, {
   timestamps: true 
 });
+
+
 
 const User = mongoose.model('User', userSchema);
 

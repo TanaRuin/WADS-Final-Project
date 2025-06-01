@@ -57,7 +57,6 @@ const uploadAttachment = async (req, res) => {
             return res.status(400).json({ message: "No file uploaded." });
         }
         
-        // Check if ticket exists using custom ticketId
         const ticket = await Ticket.findOne({ ticketId });
         
         if (!ticket) {
@@ -65,9 +64,8 @@ const uploadAttachment = async (req, res) => {
             return res.status(404).json({ message: "Ticket not found." });
         }
         
-        // Create new attachment with custom attachmentId
         const newAttachment = new Attachment({
-            attachmentId: uuidv4(),  // custom id instead of _id
+            attachmentId: uuidv4(),  
             ticketId,
             fileName: req.file.originalname,
             filePath: req.file.path
@@ -109,7 +107,6 @@ const downloadAttachment = async (req, res) => {
     try {
         const { attachmentId } = req.params;
         
-        // Find by custom attachmentId
         const attachment = await Attachment.findOne({ attachmentId });
         
         if (!attachment) {
@@ -131,7 +128,6 @@ const deleteAttachment = async (req, res) => {
     try {
         const { attachmentId } = req.params;
         
-        // Find by custom attachmentId
         const attachment = await Attachment.findOne({ attachmentId });
         
         if (!attachment) {

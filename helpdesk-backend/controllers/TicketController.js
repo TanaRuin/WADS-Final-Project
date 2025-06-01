@@ -4,7 +4,7 @@ const Comment = require("../models/Comments");
 const Attachment = require("../models/Attachments");
 const path = require("path");
 
-// Get all tickets (with optional filtering)
+// Get all tickets 
 const getAllTickets = async (req, res) => {
     try {
         const { status, category, priority, userId } = req.query;

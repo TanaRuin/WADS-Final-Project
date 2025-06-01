@@ -1,34 +1,35 @@
 const Ticket = require("../models/Tickets");
+const User = require('../models/Users'); 
+
 
 // Getting dashboard statistics for the main dashboard page
 const getDashboardStats = async (req, res) => {
-    try {
-        // Get all tickets
-        const allTickets = await Ticket.find().lean(); 
-        const count = allTickets.length;
+  try {
+    const allTickets = await Ticket.find().lean(); 
+    const count = allTickets.length;
 
-        // Get most recent ticket
-        let recentTicket = null;
-        if (allTickets.length > 0) {
-            // Sort by creation date descending
-            allTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            recentTicket = allTickets[0];
-        } else {
-            recentTicket = await Ticket.findOne().sort({ createdAt: -1 }).lean();
-        }
+    let recentTicket = null;
+    if (allTickets.length > 0) {
+      allTickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      recentTicket = allTickets[0];
+    }
 
-        let formattedRecentTicket = {};
-        if (recentTicket) {
-            formattedRecentTicket = {
-                user: recentTicket.userId,
-                submitted: new Date(recentTicket.createdAt).toLocaleDateString('en-GB'),
-                subject: recentTicket.Issue.substring(0, 30) + (recentTicket.Issue.length > 30 ? '...' : ''),
-                issue: recentTicket.Issue,
-                category: recentTicket.category,
-                priority: recentTicket.priority,
-                status: recentTicket.status
-            };
-        }
+    let formattedRecentTicket = {};
+    if (recentTicket) {
+      const user = await User.findOne({ userId: recentTicket.userId }).lean();
+
+      formattedRecentTicket = {
+        user: user
+            ? `${user.firstName} ${user.lastName}`
+            : 'Unknown User',
+        submitted: new Date(recentTicket.createdAt).toLocaleDateString('en-GB'),
+        subject: recentTicket.Issue.substring(0, 30) + (recentTicket.Issue.length > 30 ? '...' : ''),
+        issue: recentTicket.Issue,
+        category: recentTicket.category,
+        priority: recentTicket.priority,
+        status: recentTicket.status
+        };
+    }
 
         // Get tickets count by priority
         const priorityCounts = {};
@@ -66,7 +67,6 @@ const getDashboardStats = async (req, res) => {
             });
         });
 
-        // Ensure all priority levels exist
         ['high', 'medium', 'low'].forEach(priority => {
             if (!foundPriorities.has(priority)) {
                 priorityData.push({
@@ -114,7 +114,6 @@ const getDashboardStats = async (req, res) => {
             });
         });
 
-        // Ensure all status levels exist
         ['open', 'pending', 'closed'].forEach(status => {
             if (!foundStatuses.has(status)) {
                 statusData.push({
@@ -155,7 +154,6 @@ const getDashboardStats = async (req, res) => {
 
         const monthlyData = getMonthlyTicketData(allTickets);
 
-        // Build final response object
         const dashboardData = {
             total: count,
             recent: formattedRecentTicket,
