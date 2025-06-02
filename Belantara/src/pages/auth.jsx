@@ -5,39 +5,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import belantaraImage from '../assets/imagesbelantara.png';
 
-
-
 function AuthPage({ view = 'login' }) {
   const [currentView, setCurrentView] = useState(view);
   const navigate = useNavigate();
 
-  // For showing error messages
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoaded, setGoogleLoaded] = useState(false);
+
+  // If you want to track Google API loading status, implement it here.
+  // For now, we just set it to true to allow the button always active:
+  const [googleLoaded, setGoogleLoaded] = useState(true);
 
   useEffect(() => {
     setCurrentView(view);
     setError('');
-    
-    // Initialize Google OAuth
-    const initializeGoogle = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          callback: handleGoogleResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-          use_fedcm_for_prompt: true
-        });
-        setGoogleLoaded(true);
-      } else {
-        // Retry after a short delay if Google script hasn't loaded yet
-        setTimeout(initializeGoogle, 100);
-      }
-    };
-
-    initializeGoogle();
   }, [view]);
 
   const changeView = (newView) => {
@@ -46,11 +27,27 @@ function AuthPage({ view = 'login' }) {
     setError('');
   };
 
+  // Fixed function name to match the button onClick
+  const handleGoogleLogin = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = 'http://localhost:5173/auth/google/callback'; // your redirect URI
+    const scope = encodeURIComponent('openid email profile');
+    const responseType = 'code';
+    const accessType = 'offline';
+    const prompt = 'consent';
+
+    const oauth2Url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+      redirectUri
+    )}&response_type=${responseType}&scope=${scope}&access_type=${accessType}&prompt=${prompt}`;
+
+    window.location.href = oauth2Url;
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    
+
     const username = e.target.username.value.trim();
     const password = e.target.password.value.trim();
 
@@ -68,11 +65,9 @@ function AuthPage({ view = 'login' }) {
 
       const { accessToken, userdata } = response.data;
 
-      // Store only what you need
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('accessLevel', userdata.accessLevel); 
+      localStorage.setItem('accessLevel', userdata.accessLevel);
 
-      // Redirect based on access level
       if (userdata.accessLevel === 'admin') {
         navigate('/admin/dashboard');
       } else {
@@ -124,8 +119,8 @@ function AuthPage({ view = 'login' }) {
         password,
       });
 
-      // Redirect to dashboard after successful registration
-      alert("Register Successful")
+      // Redirect to login after successful registration
+      alert("Registration Successful!");
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
@@ -135,62 +130,27 @@ function AuthPage({ view = 'login' }) {
   };
 
   const handleForgotPasswordSubmit = async (e) => {
-  e.preventDefault();
-  setError('');
-  setLoading(true);
-
-  const identifier = e.target.identifier.value.trim();
-
-  if (!identifier) {
-    setError('Please enter your email or username');
-    setLoading(false);
-    return;
-  }
-
-  try {
-    await axios.post('http://localhost:5000/api/user/forgot-password', { identifier });
+    e.preventDefault();
     setError('');
-    alert('Password reset link has been sent to your email');
-    changeView('login');
-  } catch (err) {
-    setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  const handleGoogleResponse = async (response) => {
     setLoading(true);
+
+    const identifier = e.target.identifier.value.trim();
+
+    if (!identifier) {
+      setError('Please enter your email or username');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const backendresponse = await axios.post('http://localhost:5000/api/user/google-login', {
-        idToken: response.credential
-      });
-
-      const { accessToken} = backendresponse.data;
-
-      localStorage.setItem('accessToken', accessToken);
-      
- 
-      navigate('/dashboard');
-
+      await axios.post('http://localhost:5000/api/user/forgot-password', { identifier });
+      setError('');
+      alert('Password reset link has been sent to your email');
+      changeView('login');
     } catch (err) {
-      setError(err.response?.data?.message || 'Google login failed. Please try again.');
+      setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    if (googleLoaded && window.google) {
-      setError('');
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          console.log('One-tap sign-in not available, using button flow');
-        }
-      });
-    } else {
-      setError('Google Sign-In is not available. Please try again.');
     }
   };
 
@@ -246,7 +206,7 @@ function AuthPage({ view = 'login' }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
         style={{ backgroundColor: loading ? '#9ca3af' : '#2563eb' }}
         onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#1d4ed8')}
         onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#2563eb')}
@@ -257,7 +217,7 @@ function AuthPage({ view = 'login' }) {
       <button
         type="button"
         disabled={loading || !googleLoaded}
-        className="w-full text-gray-700 py-2 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="w-full text-gray-700 py-2 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
         style={{ backgroundColor: loading || !googleLoaded ? '#f3f4f6' : '#ffffff' }}
         onMouseEnter={(e) => (!loading && googleLoaded) && (e.target.style.backgroundColor = '#f9fafb')}
         onMouseLeave={(e) => (!loading && googleLoaded) && (e.target.style.backgroundColor = '#ffffff')}
@@ -384,7 +344,7 @@ function AuthPage({ view = 'login' }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
         style={{ backgroundColor: loading ? '#9ca3af' : '#2563eb' }}
         onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#1d4ed8')}
         onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#2563eb')}
@@ -412,27 +372,27 @@ function AuthPage({ view = 'login' }) {
 
   const renderForgotPasswordForm = () => (
     <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-  {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
+      {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{error}</div>}
 
-  <div>
-    <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-1">
-      Email or Username<span className="text-red-500">*</span>
-    </label>
-    <input
-      type="text"
-      id="identifier"
-      name="identifier"
-      placeholder="Enter your email address or username"
-      required
-      disabled={loading}
-      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-    />
-  </div>
+      <div>
+        <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 mb-1">
+          Email or Username<span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="identifier"
+          name="identifier"
+          placeholder="Enter your email address or username"
+          required
+          disabled={loading}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+        />
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400"
+        className="w-full text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
         style={{ backgroundColor: loading ? '#9ca3af' : '#2563eb' }}
         onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#1d4ed8')}
         onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#2563eb')}

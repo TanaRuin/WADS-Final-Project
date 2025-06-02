@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const mongoose = require('mongoose');
 
 const commentsRoutes = require('./routes/commentsRoute');
@@ -12,6 +13,8 @@ const dashboardRoutes = require('./routes/dashboardRoute');
 
 dotenv.config();
 const app = express();
+
+express.static(path.join(__dirname, 'uploads'))
 
 app.use(express.json());
 app.use(cookieParser());

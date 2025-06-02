@@ -13,6 +13,11 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true, 
   },
+  googleId: {  
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   email: {
     type: String,
     required: true,
@@ -66,9 +71,6 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { 
     type: Date 
   },
-  isVerified: { type: Boolean, default: false },
-verificationCode: { type: String },
-verificationCodeExpiry: { type: Date }
 
 
 }, {

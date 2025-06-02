@@ -4,13 +4,13 @@ require('dotenv').config();
 
 const generateTokens = (user) => {
   const accessToken = jwt.sign(
-    { userId: user.userid, accessLevel: user.accessLevel },
+    { userId: user.userId, accessLevel: user.accessLevel },
     process.env.JWT_ACCESS_SECRET,
     { expiresIn: '15m' }
   );
 
   const refreshToken = jwt.sign(
-    { userId: user.userid },
+    { userId: user.userId },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: '7d' }
   );

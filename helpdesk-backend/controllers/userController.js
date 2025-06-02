@@ -6,105 +6,91 @@ const generateTokens = require('../utils/generateToken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendMail');
+const { getGoogleUserFromCode } = require('../utils/googleAuth');
 
 const googleLogin = async (req, res) => {
   try {
-    // Fix: Use idToken to match frontend
-    const { idToken } = req.body;
+    const { code } = req.body;
 
-    if (!idToken) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'ID token is required' 
-      });
+    if (!code) {
+      return res.status(400).json({ message: 'Authorization code is required' });
     }
 
-    const payload = await verifyGoogleToken(idToken);
-    const { 
-      email, 
-      given_name: firstName, 
-      family_name: lastName,
-      sub: googleId 
-    } = payload;
+    const googleUser = await getGoogleUserFromCode(code);
 
-    // Check if user exists by email
-    let user = await User.findOne({ email });
-    const isNewUser = !user;
+    // Check if user already exists by email or googleId
+    let user = await User.findOne({ 
+      $or: [
+        { email: googleUser.email },
+        { googleId: googleUser.googleId }
+      ]
+    });
 
-    if (isNewUser) {
-      // Generate a unique username from email and Google ID
-      const baseUsername = email.split('@')[0];
-      let username = baseUsername;
-      let counter = 1;
+    if (user) {
+      // User exists, just login
+      const tokens = generateTokens(user);
       
-      // Ensure username is unique
-      while (await User.findOne({ username })) {
-        username = `${baseUsername}${counter}`;
-        counter++;
-      }
-
-      user = new User({
-        userId: uuidv4(),
-        username, 
-        firstName: firstName || '',
-        lastName: lastName || '',
-        email,
-        accessLevel: 'user',
+      res.cookie('refreshToken', tokens.refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
       });
 
-      await user.save();
-
-      // Send welcome email
-      try {
-        await sendEmail(
-          user.email,
-          'Welcome to Belantara Ticketing System',
-          `Hello ${user.firstName || 'there'},\n\nWelcome to the Belantara Ticketing System! We're glad to have you on board.\n\nRegards,\nBelantara Team`
-        );
-      } catch (emailError) {
-        console.error('Welcome email failed:', emailError);
-      }
+      return res.status(200).json({
+        success: true,
+        accessToken: tokens.accessToken,
+        userdata: {
+          userId: user.userId,
+          email: user.email,
+          accessLevel: user.accessLevel,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        }
+      });
     }
+
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+    user = new User({
+      firstName: googleUser.firstName,
+      lastName: googleUser.lastName,
+      email: googleUser.email,
+      googleId: googleUser.googleId,
+      username: googleUser.email,
+      password: hashedPassword,
+      profileImage: googleUser.profileImage,
+      accessLevel: 'user'
+    });
+
+    await user.save();
 
     const tokens = generateTokens(user);
 
-    // Set refresh token cookie
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: false,
       sameSite: 'Lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    // Fix: Match frontend expectations
     res.status(200).json({
       success: true,
-      token: tokens.accessToken, // Frontend expects 'token'
-      user: {
-        id: user.userId,
-        username: user.username,
+      accessToken: tokens.accessToken,
+      userdata: {
+        userId: user.userId,
         email: user.email,
+        accessLevel: user.accessLevel,
         firstName: user.firstName,
         lastName: user.lastName,
-        accessLevel: user.accessLevel,
-      },
-      accessLevel: user.accessLevel // Also include for compatibility
+      }
     });
-
   } catch (error) {
     console.error('Google login error:', error);
-    
-    if (error.message && error.message.includes('Token used too early')) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid token timing. Please try again.' 
-      });
-    }
-    
-    res.status(401).json({ 
-      success: false, 
-      message: 'Google authentication failed. Please try again.',
-      error:  undefined
+    res.status(500).json({
+      success: false,
+      error: error.message
     });
   }
 };
@@ -208,7 +194,7 @@ const forgotPassword = async (req, res) => {
 
     // Save reset token and expiry to user 
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
+    user.resetPasswordExpires = Date.now() + 3600000; 
     await user.save();
 
     // Create reset URL

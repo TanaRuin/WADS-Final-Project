@@ -10,7 +10,7 @@ const {
 const { authenticate, authorizeLevel } = require('../middleware/authMiddleware');
 
 // Ticket routes
-router.get('/getall',authenticate, authorizeLevel('admin'), getAllTickets);
+router.get('/getall', getAllTickets);
 router.get('/get/:id', getTicketById, authenticate);
 router.patch('/updatestatus/:id', authenticate, authorizeLevel('admin'), updateTicketStatus);
 router.post('/close/:id', authenticate, authorizeLevel('admin'), closeTicket);

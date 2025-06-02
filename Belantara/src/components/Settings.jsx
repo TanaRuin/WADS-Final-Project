@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { Camera, User, Lock, FileText } from 'lucide-react';
 import api from '../api/axiosInstance';
 
@@ -165,7 +164,7 @@ const Settings = () => {
                     <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-20 h-20 sm:w-24 sm:h-24 bg-purple-100 rounded-full flex items-center justify-center">
-                      {/* Fallback SVG */}
+    
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                         <path d="M20 21C20..." stroke="#6B46C1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>

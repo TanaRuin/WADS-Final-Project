@@ -30,7 +30,8 @@ const Dashboard = () => {
       try {
         setLoading(true);
 
-        // Use your custom axios instance here:
+        // Use your custom axios instance for automatically refreshing acesss token
+        
         const response = await api.get('/dashboard/get');
 
         setDashboardData(response.data);
