@@ -4,7 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const mongoose = require('mongoose');
-
+const { connectToDatabase, closeConnection } = require('./config/database');
 const commentsRoutes = require('./routes/commentsRoute');
 const ticketsRoutes = require('./routes/ticketsRoute');
 const attachmentsRoutes = require('./routes/attachmentsRoute');
@@ -13,18 +13,34 @@ const dashboardRoutes = require('./routes/dashboardRoute');
 
 dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 5000;
 
-express.static(path.join(__dirname, 'uploads'))
-
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-  origin: 'https://e2425-wads-l4ccg5-client.csbih.id',  
-  credentials: true  
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-const MONGO_URI = process.env.MONGO_URI
-const PORT = process.env.PORT
+app.use(express.json());
+const allowedOrigins = ['*']; // Add more origins as needed
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
+co
 
 mongoose.connect(MONGO_URI)
     .then(() => app.listen(PORT, () => console.log(`Server running on port: ${PORT}`)))
