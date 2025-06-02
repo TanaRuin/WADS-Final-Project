@@ -31,7 +31,7 @@ const GoogleCallback = () => {
         }
 
         // Send the authorization code to your backend
-        const response = await axios.post('http://localhost:5000/api/user/google-login', {
+        const response = await axios.post('https://e2425-wads-l4ccg5-server.csbihub.id/api/user/google-login', {
           code: code, // Send the authorization code, not access token
         });
 

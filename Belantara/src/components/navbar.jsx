@@ -17,7 +17,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
   const handleLogout = async () => {
   try {
-    await axios.post('http://localhost:5000/api/user/logout', {}, {
+    await axios.post('https://e2425-wads-l4ccg5-server.csbihub.id/api/user/logout', {}, {
       withCredentials: true,
     });
 
