@@ -19,7 +19,7 @@ express.static(path.join(__dirname, 'uploads'))
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'https://e2425-wads-l4ccg5-client.csbihub.id',  
+  origin: 'https://e2425-wads-l4ccg5-client.csbih.id',  
   credentials: true  
 }));
 
