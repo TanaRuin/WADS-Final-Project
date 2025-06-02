@@ -64,3 +64,4 @@ mongoose.connect(MONGO_URI)
     .catch((error) => console.log(error.message));
 
 
+server.listen(PORT, ()=>console.log(`server started on ${PORT}`));

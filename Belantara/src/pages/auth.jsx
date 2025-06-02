@@ -30,7 +30,7 @@ function AuthPage({ view = 'login' }) {
   // Fixed function name to match the button onClick
   const handleGoogleLogin = () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = 'https://e2425-wads-l4ccg5-client.csbihub.id/register'; // your redirect URI
+    const redirectUri = 'http://localhost:5173/auth/google/callback'; // your redirect URI
     const scope = encodeURIComponent('openid email profile');
     const responseType = 'code';
     const accessType = 'offline';
@@ -69,9 +69,9 @@ function AuthPage({ view = 'login' }) {
       localStorage.setItem('accessLevel', userdata.accessLevel);
 
       if (userdata.accessLevel === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate('/user');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
