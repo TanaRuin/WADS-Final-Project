@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  backend:
+    image: tanaruin/belanticket-backend:latest
+    restart: always
+    environment:
+      PORT: ${PORT}
+      MONGO_URI: ${MONGO_URI}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+    ports:
+      - "3038:3038"
+
+  frontend:
+    image: tanaruin/belanticket-frontend:latest
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "3037:3037"

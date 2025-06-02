@@ -23,10 +23,10 @@ app.use(cors({
   credentials: true  
 }));
 
-const CONNECTION_URL = process.env.MONGO_URI
+const MONGO_URI = process.env.MONGO_URI
 const PORT = process.env.PORT
 
-mongoose.connect(CONNECTION_URL)
+mongoose.connect(MONGO_URI)
     .then(() => app.listen(PORT, () => console.log(`Server running on port: ${PORT}`)))
     .catch((error) => console.log(error.message));
 

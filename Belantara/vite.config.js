@@ -3,7 +3,23 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react(), tailwindcss(),],
-  
+export default defineConfig(({ mode }) => {
+  return {
+    server: {
+      proxy: {
+        "/service": {
+          target: mode === "development"
+            ? "http://localhost:5000"
+            : "https://e2425-wads-l4ccg5-server.csbihub.id",
+          changeOrigin: true,
+          secure: mode !== "development",
+          ws: true,
+        },
+      },
+    },
+    build: {
+      outDir: "dist",
+    },
+    plugins: [react(), tailwindcss()],
+  }
 })
