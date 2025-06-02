@@ -69,9 +69,9 @@ function AuthPage({ view = 'login' }) {
       localStorage.setItem('accessLevel', userdata.accessLevel);
 
       if (userdata.accessLevel === 'admin') {
-        navigate('/admin/dashboard');
+        navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate('/user');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');

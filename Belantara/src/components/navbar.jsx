@@ -3,9 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faTwitter, faLinkedin, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import belantaraImage from '../assets/belantara.png';
-import axios from 'axios';
-
-
+import api from '../api/axiosInstance';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -17,7 +15,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   };
   const handleLogout = async () => {
   try {
-    await axios.post('http://localhost:5000/api/user/logout', {}, {
+    await api.post('/user/logout', {}, {
       withCredentials: true,
     });
 

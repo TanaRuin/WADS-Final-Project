@@ -4,6 +4,8 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');  
+const swaggerSpec = require('./utils/swagger'); 
 
 const commentsRoutes = require('./routes/commentsRoute');
 const ticketsRoutes = require('./routes/ticketsRoute');
@@ -23,10 +25,10 @@ app.use(cors({
   credentials: true  
 }));
 
-const CONNECTION_URL = process.env.MONGO_URI
+const MONGO_URI = process.env.MONGO_URI
 const PORT = process.env.PORT
 
-mongoose.connect(CONNECTION_URL)
+mongoose.connect(MONGO_URI)
     .then(() => app.listen(PORT, () => console.log(`Server running on port: ${PORT}`)))
     .catch((error) => console.log(error.message));
 
@@ -39,5 +41,9 @@ app.use('/api/attachment', attachmentsRoutes);
 app.use('/api/ticket', ticketsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+app.use("/helpdesk/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: "Belantara Ticketing System API",  
+}));
 
 
