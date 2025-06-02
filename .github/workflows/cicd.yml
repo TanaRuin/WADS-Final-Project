@@ -3,12 +3,12 @@ name: Todolist CI/CD
 on:
   push:
     branches:
-      - master
+      - admin-dashboard-testing
     paths-ignore:
       - "README.md"
   pull_request:
     branches:
-      - master
+      - admin-dashboard-testing
 
 jobs:
   continuous-integration:
@@ -23,13 +23,13 @@ jobs:
 
       - name: Build and Push Backend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/todolist-backend:latest ./server
-          docker push ${{ secrets.DOCKER_USERNAME }}/todolist-backend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/belanticket-backend:latest ./helpdesk-backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/belanticket-backend:latest
 
       - name: Build and Push Frontend Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/todolist-frontend:latest ./client
-          docker push ${{ secrets.DOCKER_USERNAME }}/todolist-frontend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/belanticket-frontend:latest ./Belantara
+          docker push ${{ secrets.DOCKER_USERNAME }}/belanticket-frontend:latest
 
   continuous-deployment:
     needs: continuous-integration
@@ -46,10 +46,10 @@ jobs:
           echo "export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock" >> $GITHUB_ENV
 
       - name: Pull Latest Backend Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/todolist-backend:latest
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/belanticket-backend:latest
 
       - name: Pull Latest Frontend Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/todolist-frontend:latest
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/belanticket-frontend:latest
 
       - name: Stop and Remove Old Containers
         run: |
