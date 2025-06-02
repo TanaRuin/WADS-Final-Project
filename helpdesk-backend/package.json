@@ -21,9 +21,15 @@
     "passport-jwt": "^4.0.1",
     "sequelize": "^6.37.7",
     "sequelize-mongodb": "^1.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   }
 }
