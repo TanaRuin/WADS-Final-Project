@@ -1,6 +1,9 @@
-const swaggerJsDoc = require("swagger-jsdoc");
-const path = require("path");
+import swaggerJsDoc from "swagger-jsdoc";
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 /**
  * @swagger
  * components:
@@ -558,7 +561,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:5000/api/user",
+        url: "http://localhost:5000/service/user",
 
       },
     ],
@@ -568,4 +571,4 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsDoc(swaggerOptions);
 
-module.exports = swaggerSpec;
+export default swaggerSpec;
