@@ -4,8 +4,6 @@ const router = express.Router();
 const {
   getUserProfile,
   updateUserProfile,
-  changePassword,
-  uploadProfileImage,
   register,
   login,
   refreshToken,
@@ -17,7 +15,6 @@ const {
 } = require('../controllers/userController');
 
 const { authenticate } = require('../middleware/authMiddleware');
-const upload = require('../middleware/uploadProfilePic');
 
 // Auth routes
 router.post('/register', register);
@@ -34,7 +31,6 @@ router.get('/reset-password/:token', checkResetToken);
 // Protected user routes
 router.get('/getProfile', authenticate, getUserProfile);
 router.put('/updateProfile', authenticate, updateUserProfile);
-router.post('/change-password', authenticate, changePassword);
-router.post('/profile-image', authenticate, upload.single('profileImage'), uploadProfileImage);
+
 
 module.exports = router;

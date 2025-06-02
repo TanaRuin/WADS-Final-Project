@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import belantaraImage from '../assets/imagesbelantara.png';
+import api from '../api/axiosInstance';
 
 function AuthPage({ view = 'login' }) {
   const [currentView, setCurrentView] = useState(view);
@@ -58,7 +58,7 @@ function AuthPage({ view = 'login' }) {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/user/login', {
+      const response = await api.post('/user/login', {
         username,
         password,
       });
@@ -111,7 +111,7 @@ function AuthPage({ view = 'login' }) {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/user/register', {
+      await api.post('/user/register', {
         firstName,
         lastName,
         username,
@@ -143,7 +143,7 @@ function AuthPage({ view = 'login' }) {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/user/forgot-password', { identifier });
+      await api.post('/user/forgot-password', { identifier });
       setError('');
       alert('Password reset link has been sent to your email');
       changeView('login');

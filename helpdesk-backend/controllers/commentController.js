@@ -29,7 +29,6 @@ const getTicketComments = async (req, res) => {
     }
 };
 
-// Add a comment to a ticket
 const addComment = async (req, res) => {
     try {
         const { ticketId } = req.params;
@@ -40,7 +39,6 @@ const addComment = async (req, res) => {
         }
 
         const ticket = await Ticket.findOne({ ticketId });
-
         if (!ticket) {
             return res.status(404).json({ message: "Ticket not found." });
         }
@@ -48,15 +46,20 @@ const addComment = async (req, res) => {
         const newComment = new Comment({
             commentId: uuidv4(),
             ticketId,
-            userId: req.user.id,
+            userId: req.user.id,  
             content
         });
 
         await newComment.save();
 
+        // Fetch user info for the author name
+        const user = await User.findOne({ userId: req.user.id });
+
+        const authorName = user && `${user.firstName} ${user.lastName}`;
+
         const formattedComment = {
             id: newComment.commentId,
-            author: 'Support Staff',
+            author: authorName,
             text: newComment.content,
             timestamp: new Date(newComment.createdAt).toLocaleDateString('en-GB') + ' ' +
                        new Date(newComment.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -77,10 +80,6 @@ const deleteComment = async (req, res) => {
 
         if (!comment) {
             return res.status(404).json({ message: "Comment not found." });
-        }
-
-        if (comment.userId !== req.user.id && req.user.role !== 'admin') {
-            return res.status(403).json({ message: "Unauthorized to delete this comment." });
         }
 
         await comment.deleteOne();

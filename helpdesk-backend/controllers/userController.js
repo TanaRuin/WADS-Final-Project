@@ -350,94 +350,13 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-// Change password
-const changePassword = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { newPassword, confirmPassword } = req.body;
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'New password and confirmation do not match'
-      });
-    }
 
-    const user = await User.findOne({ userId });
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-    user.password = hashedPassword;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Password changed successfully'
-    });
-  } catch (error) {
-    console.error('Error changing password:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to change password',
-      error: error.message
-    });
-  }
-};
-
-// Upload profile image
-const uploadProfileImage = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No image file provided'
-      });
-    }
-
-    const user = await User.findOne({ userId });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    user.profileImage = req.file.path || `/uploads/${req.file.filename}`;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Profile image uploaded successfully',
-      userdata: {
-        profileImage: user.profileImage
-      }
-    });
-  } catch (error) {
-    console.error('Error uploading profile image:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to upload profile image',
-      error: error.message
-    });
-  }
-};
 
 module.exports = {
   getUserProfile,
   updateUserProfile,
-  changePassword,
-  uploadProfileImage,
   register,
   login,
   refreshToken,

@@ -22,19 +22,96 @@ const Dashboard = () => {
     },
     priorityData: [],
     statusData: [],
+    priorityDataComplete: [],
+    statusDataComplete: [],
     monthlyData: []
   });
+
+  // Color mapping functions
+  const getPriorityColor = (priority) => {
+    const colors = {
+      'High': '#ef4444', // red
+      'Medium': '#eab308', // yellow
+      'Low': '#22c55e' // green
+    };
+    return colors[priority] || '#6b7280'; // default gray
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'Open': '#22c55e', // green
+      'Pending': '#eab308', // yellow
+      'Closed': '#ef4444' // red
+    };
+    return colors[status] || '#6b7280'; // default gray
+  };
+
+  // Function to capitalize first letter
+  const capitalize = (str) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
+  // Create complete legend data
+  const createCompleteLegendData = (data, type) => {
+    const baseItems = type === 'priority' 
+      ? [
+          { name: 'High', value: 0, color: getPriorityColor('High') },
+          { name: 'Medium', value: 0, color: getPriorityColor('Medium') },
+          { name: 'Low', value: 0, color: getPriorityColor('Low') }
+        ]
+      : [
+          { name: 'Open', value: 0, color: getStatusColor('Open') },
+          { name: 'Pending', value: 0, color: getStatusColor('Pending') },
+          { name: 'Closed', value: 0, color: getStatusColor('Closed') }
+        ];
+
+    // Update values from actual data
+    data.forEach(item => {
+      const capitalizedName = capitalize(item.name);
+      const baseItem = baseItems.find(base => base.name === capitalizedName);
+      if (baseItem) {
+        baseItem.value = item.value;
+      }
+    });
+
+    return baseItems;
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-
-        // Use your custom axios instance for automatically refreshing acesss token
         
         const response = await api.get('/dashboard/get');
 
-        setDashboardData(response.data);
+        // Process the data to add colors and normalize case
+        const processedData = {
+          ...response.data,
+          priorityData: response.data.priorityData
+            .filter(item => item.value > 0)
+            .map(item => ({
+              ...item,
+              name: capitalize(item.name),
+              color: getPriorityColor(capitalize(item.name))
+            })),
+          statusData: response.data.statusData
+            .filter(item => item.value > 0)
+            .map(item => ({
+              ...item,
+              name: capitalize(item.name),
+              color: getStatusColor(capitalize(item.name))
+            }))
+        };
+
+        // Create complete data with all categories for legend
+        const completeProcessedData = {
+          ...processedData,
+          priorityDataComplete: createCompleteLegendData(processedData.priorityData, 'priority'),
+          statusDataComplete: createCompleteLegendData(processedData.statusData, 'status')
+        };
+
+        setDashboardData(completeProcessedData);
         setError(null);
       } catch (err) {
         console.error(err);
@@ -139,7 +216,7 @@ const Dashboard = () => {
                       outerRadius="60%"
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, value }) => `${name} (${value})`}
+                      label={({ name, value }) => value > 0 ? `${name} (${value})` : ''}
                       labelLine={false}
                     >
                       {dashboardData.priorityData.map((entry, index) => (
@@ -155,7 +232,15 @@ const Dashboard = () => {
                     </text>
 
                     <Tooltip />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      payload={dashboardData.priorityDataComplete.map(item => ({
+                        value: item.name,
+                        type: 'circle',
+                        color: item.color
+                      }))}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -175,7 +260,7 @@ const Dashboard = () => {
                       outerRadius="60%"
                       paddingAngle={2}
                       dataKey="value"
-                      label={({ name, value }) => `${name} (${value})`}
+                      label={({ name, value }) => value > 0 ? `${name} (${value})` : ''}
                       labelLine={false}
                     >
                       {dashboardData.statusData.map((entry, index) => (
@@ -191,7 +276,15 @@ const Dashboard = () => {
                     </text>
 
                     <Tooltip />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      payload={dashboardData.statusDataComplete.map(item => ({
+                        value: item.name,
+                        type: 'circle',
+                        color: item.color
+                      }))}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
