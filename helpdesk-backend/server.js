@@ -19,7 +19,7 @@ express.static(path.join(__dirname, 'uploads'))
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:5173',  
+  origin: 'https://e2425-wads-l4ccg5-client.csbihub.id',  
   credentials: true  
 }));
 
