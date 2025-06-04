@@ -1,141 +1,206 @@
-import swaggerJsDoc from "swagger-jsdoc";
-import path from 'path';
+const swaggerJsDoc = require("swagger-jsdoc");
+const path = require('path');
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * @swagger
  * components:
  *   securitySchemes:
  *     bearerAuth:
- *       type: apiKey
- *       in: header
- *       name: Authorization
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
  *   schemas:
- *      User:
- *         type: object
- *         required:
- *            - personal_id
- *            - name
- *            - email
- *            - password
- *         properties:
- *            _id:
- *               type: object
- *               properties:
- *                  $oid:
- *                     type: string
- *                     description: Unique identifier for the user
- *            user_image:
- *               type: string
- *               description: Image of the user
- *            personal_id:
- *               type: string
- *               description: User's Personal ID (ID Card, Passport, etc)
- *            name:
- *               type: string
- *               description: Full name of the user
- *            email:
- *               type: string
- *               description: Email address of the user
- *            password:
- *               type: string
- *               description: Hashed password of the user
- *            address:
- *               type: string
- *               description: User's address
- *            phone_number:
- *               type: string
- *               description: User's address
- *            joinedAt:
- *               type: string
- *               format: date-time
- *               description: Date when the user joined
- *            updatedAt:
- *               type: string
- *               format: date-time
- *               description: Last date when the user's information was updated
- *         example:
- *            _id:
- *               $oid: "uniqueKeyUser"
- *            personal_id: "BN1234567"
- *            user_image: "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Alexander"
- *            name: "juwono"
- *            email: "juwono@gmail.com"
- *            password: "securePassword123"
- *            address: "Jakarta, Indonesia"
- *            phone_number: "089262317312"
- *      Todo:
- *         type: object
- *         required:
- *            - todo_name
- *            - todo_image
- *            - todo_status
- *         properties:
- *            _id:
- *               type: object
- *               properties:
- *                  $oid:
- *                     type: string
- *                     description: Unique identifier for the todo list
- *            todo_name:
- *               type: string
- *               description: Name of the todo list
- *            todo_desc:
- *               type: string
- *               description: Description of the todo list
- *            todo_status:
- *               type: string
- *               description: status of the todo list (active or finished)
- *            createdAt:
- *               type: string
- *               format: date-time
- *               description: Date when the user joined
- *            updatedAt:
- *               type: string
- *               format: date-time
- *               description: Last date when the user's information was updated
- *         example:
- *            _id:
- *               $oid: "uniqueKeyUser"
- *            todo_name: "Review Mid Exam"
- *            todo_image: "https://api.dicebear.com/9.x/icons/svg?seed=Katherine"
- *            todo_desc: "this is the description of the todo list"
- *            todo_status: "active"
-*/
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *         - firstName
+ *         - lastName
+ *       properties:
+ *         userId:
+ *           type: string
+ *           description: Unique user ID (UUID)
+ *           example: "uuid-generated-id"
+ *         username:
+ *           type: string
+ *           description: Unique username (optional)
+ *           example: "samuel235"
+ *         googleId:
+ *           type: string
+ *           description: Google OAuth ID (optional)
+ *         email:
+ *           type: string
+ *           description: User email address
+ *           example: "samuel23505@gmail.com"
+ *         password:
+ *           type: string
+ *           description: User password (hashed)
+ *         firstName:
+ *           type: string
+ *           description: User first name
+ *           example: "Samuel"
+ *         lastName:
+ *           type: string
+ *           description: User last name
+ *           example: "Setiadi"
+ *         accessLevel:
+ *           type: string
+ *           enum: [user, admin]
+ *           default: user
+ *         jobRole:
+ *           type: string
+ *           description: User job role (optional)
+ *         description:
+ *           type: string
+ *           description: User description (optional)
+ *         profileImage:
+ *           type: string
+ *           description: URL or path of user profile image (optional)
+ *       example:
+ *         userId: "uuid-generated-id"
+ *         username: "samuel235"
+ *         googleId: null
+ *         email: "samuel23505@gmail.com"
+ *         password: "hashed-password"
+ *         firstName: "Samuel"
+ *         lastName: "Setiadi"
+ *         accessLevel: "user"
+ *         jobRole: "Developer"
+ *         description: "Full-stack developer"
+ *         profileImage: "/images/profile.png"
+ * 
+ *     Ticket:
+ *       type: object
+ *       required:
+ *         - userId
+ *         - Issue
+ *         - description
+ *         - category
+ *         - priority
+ *         - status
+ *       properties:
+ *         ticketId:
+ *           type: string
+ *           description: Unique ticket ID (UUID)
+ *         userId:
+ *           type: string
+ *           description: ID of user who created the ticket
+ *         Issue:
+ *           type: string
+ *           description: Ticket issue title
+ *         description:
+ *           type: string
+ *           description: Detailed ticket description
+ *         category:
+ *           type: string
+ *           description: Category of the ticket
+ *         priority:
+ *           type: string
+ *           description: Priority level (high, medium, low)
+ *         status:
+ *           type: string
+ *           description: Status of ticket (open, pending, closed)
+ *       example:
+ *         ticketId: "ticket-uuid-1234"
+ *         userId: "uuid-user-id"
+ *         Issue: "Cannot login"
+ *         description: "Unable to login with correct credentials"
+ *         category: "Authentication"
+ *         priority: "high"
+ *         status: "open"
+ * 
+ *     Comment:
+ *       type: object
+ *       required:
+ *         - ticketId
+ *         - userId
+ *         - content
+ *       properties:
+ *         commentId:
+ *           type: string
+ *           description: Unique comment ID (UUID)
+ *         ticketId:
+ *           type: string
+ *           description: ID of the ticket this comment belongs to
+ *         userId:
+ *           type: string
+ *           description: ID of user who made the comment
+ *         content:
+ *           type: string
+ *           description: Comment text content
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp of when the comment was created
+ *       example:
+ *         commentId: "comment-uuid-1234"
+ *         ticketId: "ticket-uuid-1234"
+ *         userId: "uuid-user-id"
+ *         content: "I have the same issue"
+ *         createdAt: "2025-06-02T10:20:00Z"
+ * 
+ *     Attachment:
+ *       type: object
+ *       required:
+ *         - ticketId
+ *         - fileName
+ *         - filePath
+ *       properties:
+ *         attachmentId:
+ *           type: string
+ *           description: Unique attachment ID (UUID)
+ *         ticketId:
+ *           type: string
+ *           description: ID of the ticket this attachment belongs to
+ *         fileName:
+ *           type: string
+ *           description: Name of the attached file
+ *         filePath:
+ *           type: string
+ *           description: Storage path or URL of the file
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Timestamp of when the attachment was created
+ *       example:
+ *         attachmentId: "attachment-uuid-1234"
+ *         ticketId: "ticket-uuid-1234"
+ *         fileName: "error_screenshot.png"
+ *         filePath: "/uploads/error_screenshot.png"
+ *         createdAt: "2025-06-02T10:20:00Z"
+ */
+
+
 
 const swaggerSpec = swaggerJsDoc({
-    definition: {
-        openapi: '3.0.3',
-        info: {
-            title: "Todo List Management API",
-            version: "1.0.0",
-            description: "API for managing todo list, including user authentication and todo list management.",
-        },
-        servers: [
-            {
-                url: 'http://localhost:5000/service/user',
-                description: 'Development - user',
-            },
-            {
-                url: "http://localhost:5000/service/todo",
-                description: 'Development - todo'
-            }
-        ],
-        security: [
-            {
-                bearerAuth: []
-            }
-        ]
-    },
-    apis: [
-        path.join(__dirname, '..', 'routes', '*.js'),
-        path.join(__dirname, '..', 'routes', '*.ts'),
-        path.join(__dirname, 'swagger.js'),
-        path.join(__dirname, 'swagger.ts'),
-    ],
+  definition: {
+      openapi: "3.0.3",
+      info: {
+          title: "Belantara Help Desk",
+          version: "1.0.0",
+          description: "Help Desk for Bekantara.",
+      },
+      servers: [
+          {
+              url: 'https://e2425-wads-l4ccg5-server.csbihub.id/',
+              description: 'Production',
+          }
+      ],
+      security: [
+          {
+              bearerAuth: []
+          }
+      ]
+  },
+  apis: [
+      path.join(__dirname, '..', 'routes', '*.js'),
+      path.join(__dirname, '..', 'routes', '*.ts'),
+      path.join(__dirname, 'swagger.js'),
+      path.join(__dirname, 'swagger.ts'),
+  ],
 });
 
-export default swaggerSpec;
+module.exports = swaggerSpec;
