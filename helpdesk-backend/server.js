@@ -4,7 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const mongoose = require('mongoose');
-const swaggerSpec = require('./utils/swagger.js');
+const swaggerSpec = require('./utils/swagger.js').default;
 const swaggerUi = require('swagger-ui-express');
 
 const commentsRoutes = require('./routes/commentsRoute');
