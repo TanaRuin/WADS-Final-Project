@@ -108,7 +108,7 @@ const __dirname = path.dirname(__filename);
 
 const swaggerSpec = swaggerJsDoc({
     definition: {
-        openapi: "3.0.0",
+        openapi: '3.1.0',
         info: {
             title: "Todo List Management API",
             version: "1.0.0",
