@@ -1,103 +1,154 @@
 const { v4: uuidv4 } = require("uuid");
-const Comment = require("../models/Comments");
+const Attachment = require("../models/Attachments");
 const Ticket = require("../models/Tickets");
-const User = require("../models/Users");
+const fs = require("fs");
+const path = require("path");
 
-// Get all comments for a ticket
-const getComments = async (req, res) => {
+// Get all attachments for a specific ticket
+const getTicketAttachments = async (req, res) => {
     try {
         const { ticketId } = req.params;
-
-        // Check if ticket exists
+        
+        // Verify that the ticket exists using custom ticketId
         const ticket = await Ticket.findOne({ ticketId });
+        
         if (!ticket) {
-            return res.status(404).json({ message: "Ticket not found" });
+            return res.status(404).json({ message: "Ticket not found." });
         }
-
-        // Get comments sorted by creation time
-        const comments = await Comment.find({ ticketId }).sort({ createdAt: 1 });
-
-        // Format comments with user info
-        const formattedComments = await Promise.all(
-            comments.map(async (comment) => {
-                let authorName = 'Unknown User';
-                
-                try {
-                    const user = await User.findOne({ userId: comment.userId });
-                    authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
-                } catch (err) {
-                    authorName = 'Unknown User';
-                }
-
-                return {
-                    id: comment.commentId,
-                    author: authorName,
-                    message: comment.content,
-                    timestamp: comment.createdAt.toISOString()
-                };
-            })
-        );
-
-        res.json(formattedComments);
+        
+        // Fetch attachments for the ticket
+        const attachments = await Attachment.find({ ticketId }).lean();
+        
+        // Format attachments to match frontend expectations
+        const formattedAttachments = attachments.map(attachment => {
+            const fileExtension = path.extname(attachment.fileName).toLowerCase();
+            
+            let fileType = 'file';
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(fileExtension)) {
+                fileType = 'image';
+            } else if (fileExtension === '.pdf') {
+                fileType = 'pdf';
+            } else if (['.xls', '.xlsx'].includes(fileExtension)) {
+                fileType = 'excel';
+            } else if (fileExtension === '.txt') {
+                fileType = 'text';
+            }
+            
+            return {
+                id: attachment.attachmentId,   // custom id field
+                name: attachment.fileName,
+                type: fileType,
+                url: `/api/attachments/${attachment.attachmentId}`  // use custom id here
+            };
+        });
+        
+        res.status(200).json(formattedAttachments);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        return res.status(500).json({ message: error.message });
     }
 };
 
-// Add new comment
-const addComment = async (req, res) => {
+// Upload an attachment to a ticket
+const uploadAttachment = async (req, res) => {
     try {
         const { ticketId } = req.params;
-        const { content } = req.body;
-
-        if (!content || content.trim() === '') {
-            return res.status(400).json({ message: "Comment content is required" });
+        
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded." });
         }
-
-        // Check if ticket exists
+        
         const ticket = await Ticket.findOne({ ticketId });
+        
         if (!ticket) {
-            return res.status(404).json({ message: "Ticket not found" });
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ message: "Ticket not found." });
         }
-
-        // Get user info before creating comment
-        const user = await User.findOne({ userId: req.user.id });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Create new comment
-        const newComment = new Comment({
-            commentId: uuidv4(),
+        
+        const newAttachment = new Attachment({
+            attachmentId: uuidv4(),  
             ticketId,
-            userId: req.user.id,
-            content: content.trim()
+            fileName: req.file.originalname,
+            filePath: req.file.path
         });
-
-        await newComment.save();
-
-        // If the commenter is an admin, update ticket status to pending
-        if (user.accessLevel === 'admin') { 
-            ticket.status = 'pending';
-            await ticket.save();
+        
+        await newAttachment.save();
+        
+        const fileExtension = path.extname(newAttachment.fileName).toLowerCase();
+        
+        let fileType = 'file';
+        if (['.jpg', '.jpeg', '.png', '.gif', '.bmp'].includes(fileExtension)) {
+            fileType = 'image';
+        } else if (fileExtension === '.pdf') {
+            fileType = 'pdf';
+        } else if (['.xls', '.xlsx'].includes(fileExtension)) {
+            fileType = 'excel';
+        } else if (fileExtension === '.txt') {
+            fileType = 'text';
         }
-
-        const authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
-
-        const responseComment = {
-            id: newComment.commentId,
-            author: authorName,
-            message: newComment.content,
-            timestamp: newComment.createdAt.toISOString()
+        
+        const formattedAttachment = {
+            id: newAttachment.attachmentId,
+            name: newAttachment.fileName,
+            type: fileType,
+            url: `/api/attachments/${newAttachment.attachmentId}`
         };
-
-        res.status(201).json(responseComment);
+        
+        res.status(201).json(formattedAttachment);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        if (req.file) {
+            fs.unlinkSync(req.file.path);
+        }
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+// Download a specific attachment
+const downloadAttachment = async (req, res) => {
+    try {
+        const { attachmentId } = req.params;
+        
+        const attachment = await Attachment.findOne({ attachmentId });
+        
+        if (!attachment) {
+            return res.status(404).json({ message: "Attachment not found." });
+        }
+        
+        res.download(attachment.filePath, attachment.fileName, (err) => {
+            if (err) {
+                return res.status(500).json({ message: "Error downloading file." });
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+// Delete an attachment
+const deleteAttachment = async (req, res) => {
+    try {
+        const { attachmentId } = req.params;
+        
+        const attachment = await Attachment.findOne({ attachmentId });
+        
+        if (!attachment) {
+            return res.status(404).json({ message: "Attachment not found." });
+        }
+        
+        if (fs.existsSync(attachment.filePath)) {
+            fs.unlinkSync(attachment.filePath);
+        }
+        
+        await attachment.deleteOne();
+        
+        res.status(200).json({ message: "Attachment deleted successfully." });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 };
 
 module.exports = {
-    getComments,
-    addComment
+    getTicketAttachments,
+    uploadAttachment,
+    downloadAttachment,
+    deleteAttachment
 };
