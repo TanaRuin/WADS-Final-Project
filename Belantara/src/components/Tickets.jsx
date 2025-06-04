@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RefreshCw, ArrowLeft, Paperclip } from 'lucide-react';
+import { Search, ArrowLeft, Paperclip } from 'lucide-react';
 import api from '../api/axiosInstance';
 
 const Tickets = () => {
@@ -8,9 +8,12 @@ const Tickets = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [newComment, setNewComment] = useState('');
+  const [addingComment, setAddingComment] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
 
   // Fetch all tickets
-    const fetchTickets = async () => {
+  const fetchTickets = async () => {
     setLoading(true);
     try {
       const { data } = await api.get('/ticket/getall');
@@ -36,14 +39,58 @@ const Tickets = () => {
     }
   };
 
+  // Fetch comments for a ticket
+  const fetchComments = async (ticketId) => {
+    try {
+      const { data } = await api.get(`/comment/get/${ticketId}`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      return [];
+    }
+  };
+
+  // Add a new comment
+  const addComment = async (ticketId, content) => {
+    setAddingComment(true);
+    try {
+      console.log('Sending comment:', content);
+      const { data } = await api.post(
+        `/comments/add/${ticketId}`,
+        { content });
+
+      // Refresh the ticket to get updated comments and potentially updated status
+      await fetchTicketById(ticketId);
+      console.log('Refetched ticket');
+      return data;
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    throw error;
+  } finally {
+    setAddingComment(false);
+  }
+};
+
   // Close ticket
-   const closeTicket = async (ticketId) => {
+  const closeTicket = async (ticketId) => {
     try {
       await api.post(`/ticket/close/${ticketId}`);
       await fetchTicketById(ticketId);
       await fetchTickets();
     } catch (error) {
       console.error('Error closing ticket:', error);
+    }
+  };
+
+  // Handle adding comment
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    
+    try {
+      await addComment(selectedTicket.ticketId, newComment.trim());
+      setNewComment('');
+    } catch (error) {
+      alert('Failed to add comment. Please try again.');
     }
   };
 
@@ -67,12 +114,32 @@ const Tickets = () => {
 
   // Filter tickets based on search
   const filteredTickets = tickets.filter(ticket =>
+    (statusFilter === '' || ticket.status == statusFilter) &&
+    (priorityFilter === '' || ticket.priority === priorityFilter) &&
+    (
     ticket.issue?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ticket.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
-  // Check URL params on component mount
+  // Format timestamp for display
+  const formatTimestamp = (timestamp) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return timestamp;
+    }
+  };
+
+  // Auto-fetch tickets on every render
   useEffect(() => {
     fetchTickets();
     
@@ -170,7 +237,7 @@ const Tickets = () => {
               {selectedTicket.status !== 'closed' && (
                 <button
                   onClick={() => closeTicket(selectedTicket.ticketId)}
-                   style={{
+                  style={{
                     backgroundColor: '#dc2626', 
                     color: 'white',
                     padding: '0.5rem 1rem', 
@@ -189,15 +256,21 @@ const Tickets = () => {
               
               {/* Comments List */}
               <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
-                {selectedTicket.comments && selectedTicket.comments.map((comment, index) => (
-                  <div key={index} className="border-b border-gray-100 pb-3 last:border-b-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-semibold text-sm">{comment.author}</span>
-                      <span className="text-xs text-gray-500">{comment.timestamp}</span>
+                {selectedTicket.comments && selectedTicket.comments.length > 0 ? (
+                  selectedTicket.comments.map((comment, index) => (
+                    <div key={comment.id || index} className="border-b border-gray-100 pb-3 last:border-b-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-semibold text-sm">{comment.author}</span>
+                        <span className="text-xs text-gray-500">
+                          {formatTimestamp(comment.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">{comment.message}</p>
                     </div>
-                    <p className="text-sm text-gray-700">{comment.text}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-sm">No comments yet</p>
+                )}
               </div>
 
               {/* Add Comment */}
@@ -208,23 +281,22 @@ const Tickets = () => {
                   placeholder="Add a comment..."
                   className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows="3"
+                  disabled={addingComment}
                 />
                 <button
-                  onClick={() => {
-                    console.log('Adding comment:', newComment);
-                    setNewComment('');
-                  }}
+                  onClick={handleAddComment}
+                  disabled={addingComment || !newComment.trim()}
                   style={{
-    marginTop: '0.5rem',       // mt-2
-    backgroundColor: '#2563eb', // blue-600
-    color: 'white',
-    padding: '0.5rem 1rem',    // px-4 py-2
-    borderRadius: '0.5rem',    // rounded-lg
-    transition: 'background-color 0.2s ease-in-out',
-    cursor: 'pointer',
-  }}
+                    marginTop: '0.5rem',
+                    backgroundColor: addingComment || !newComment.trim() ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.5rem',
+                    transition: 'background-color 0.2s ease-in-out',
+                    cursor: addingComment || !newComment.trim() ? 'not-allowed' : 'pointer',
+                  }}
                 >
-                  Send
+                  {addingComment ? 'Sending...' : 'Send'}
                 </button>
               </div>
             </div>
@@ -239,25 +311,41 @@ const Tickets = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-end items-center mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search tickets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={fetchTickets}
-              disabled={loading}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          {/* Status Filter */}
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
-            </button>
+              <option value="">All Status</option>
+              <option value="open">Open</option>
+              <option value="pending">Pending</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+            {/* Priority Filter */}
+          <div>
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">All Priorities</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          <div className="relative">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search tickets..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
         </div>
 
@@ -306,8 +394,8 @@ const Tickets = () => {
           )}
           
           {loading && (
-            <div className="text-center py-8 text-gray-500">
-              Loading tickets...
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
             </div>
           )}
         </div>

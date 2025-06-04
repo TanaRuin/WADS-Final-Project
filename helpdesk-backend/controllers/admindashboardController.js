@@ -137,15 +137,34 @@ const getDashboardStats = async (req, res) => {
                 const monthYear = month.toLocaleString('default', { month: 'short', year: 'numeric' });
                 const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
                 const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+                
+                let resolved = 0;
+                let total = 0;
 
-                const closedInMonth = tickets.filter(ticket => {
-                    const closedDate = ticket.closedAt ? new Date(ticket.closedAt) : null;
-                    return closedDate && closedDate >= monthStart && closedDate <= monthEnd;
-                }).length;
+                tickets.forEach(ticket => {
+                    const createdDate = new Date(ticket.createdAt);
+                    const updatedDate = new Date(ticket.updatedAt);
+                    const status = ticket.status?.toLowerCase();
+                    
+                    // Total tickets created in this month
+                    if (createdDate >= monthStart && createdDate <= monthEnd) {
+                        total++;
+                    }
+
+                    // Resolved tickets: status is 'closed' and updatedAt is in this month
+                    if (
+                        status === 'closed'  &&
+                        updatedDate >= monthStart &&
+                        updatedDate <= monthEnd
+                    ) {
+                        resolved++
+                    }
+                });
 
                 monthlyData.push({
                     month: monthYear,
-                    resolved: closedInMonth
+                    resolved,
+                    total
                 });
             }
 

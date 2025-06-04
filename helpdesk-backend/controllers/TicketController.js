@@ -55,7 +55,7 @@ const getTicketsByUserId = async (req, res) => {
         const userId = req.user.userId;
 
     
-        const tickets = await Ticket.findOne({ userId });
+        const tickets = await Ticket.find({ userId });
 
 
         if (!tickets || tickets.length === 0) {

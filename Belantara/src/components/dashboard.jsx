@@ -110,6 +110,18 @@ const Dashboard = () => {
           priorityDataComplete: createCompleteLegendData(processedData.priorityData, 'priority'),
           statusDataComplete: createCompleteLegendData(processedData.statusData, 'status')
         };
+        
+        // No need for RESOLVED_STATUSES or looping by status anymore
+
+        const finalMonthlyData = (response.data.monthlyData || []).map(entry => ({
+          name: entry.month,
+          resolved: entry.resolved || 0,
+          unresolved: entry.unresolved || 0
+        }));
+
+        console.log("monthlyData from backend:", response.data.monthlyData);
+        console.log("After processing:", processedData.monthlyData);
+        console.log("Final state monthlyData:", finalMonthlyData);
 
         setDashboardData(completeProcessedData);
         setError(null);
@@ -293,13 +305,13 @@ const Dashboard = () => {
           
           {/* Monthly resolution chart */}
           <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-lg font-medium text-gray-700 mb-4">Total Resolved and Unresolved Tickets by Month</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-4">Total and Resolved Tickets by Month</h3>
             <div className="h-64 md:h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dashboardData.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="name" 
+                    dataKey="month" 
                     tick={{ fontSize: 12 }}
                     interval="preserveStartEnd"
                   />
@@ -316,7 +328,7 @@ const Dashboard = () => {
                   />
                   <Line 
                     type="monotone" 
-                    dataKey="unresolved" 
+                    dataKey="total" 
                     stroke="#0ea5e9" 
                     activeDot={{ r: 8 }}
                     strokeWidth={2}
