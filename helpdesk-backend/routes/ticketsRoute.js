@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 const {
   getAllTickets,
   getTicketById,
@@ -10,15 +9,17 @@ const {
 
 const { authenticate, authorizeLevel } = require('../middleware/authMiddleware');
 
+const router = express.Router();
+
 /**
- * @swagger
+ * @openapi
  * tags:
  *   name: Tickets
  *   description: Ticket management endpoints
  */
 
 /**
- * @swagger
+ * @openapi
  * /getall:
  *   get:
  *     summary: Get all tickets with optional filters
@@ -53,7 +54,7 @@ const { authenticate, authorizeLevel } = require('../middleware/authMiddleware')
 router.get('/getall', getAllTickets);
 
 /**
- * @swagger
+ * @openapi
  * /get/{ticketId}:
  *   get:
  *     summary: Get a ticket by its ID
@@ -85,7 +86,7 @@ router.get('/user',authenticate, getTicketsByUserId)
 
 
 /**
- * @swagger
+ * @openapi
  * /close/{ticketId}:
  *   post:
  *     summary: Close a ticket

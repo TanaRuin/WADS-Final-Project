@@ -1,10 +1,18 @@
 const express = require('express');
-const router = express.Router();
 
 const {
   getComments,
   addComment,
 } = require('../controllers/commentController');
+
+const router = express.Router();
+
+/**
+ * @openapi
+ * tags:
+ *    - name: Comments
+ *      description: Comment related operations
+ */
 
 /**
  * @openapi

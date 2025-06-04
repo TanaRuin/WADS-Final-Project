@@ -1,5 +1,4 @@
 const express = require('express');
-const router = express.Router();
 
 const {
   getUserProfile,
@@ -16,13 +15,24 @@ const {
 
 const { authenticate } = require('../middleware/authMiddleware');
 
-// Auth routes
+const router = express.Router();
+
 /**
- * @swagger
+ * @openapi
+ * tags:
+ *    - name: User
+ *      description: User and authentication related operations
+ */
+
+// Auth routes
+
+/**
+ * @openapi
  * /register:
  *   post:
+ *     tags: 
+ *       - User
  *     summary: Register a new user
- *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -55,12 +65,14 @@ const { authenticate } = require('../middleware/authMiddleware');
  *         description: Failed to register user
  */
 router.post('/register', register);
+
 /**
- * @swagger
+ * @openapi
  * /login:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Login user
- *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
@@ -83,20 +95,13 @@ router.post('/register', register);
  */
 router.post('/login', login);
 
-
 /**
- * @swagger
- * tags:
- *   name: Authentication
- *   description: Authentication related endpoints
- */
-
-/**
- * @swagger
+ * @openapi
  * /google-login:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Login or register user via Google OAuth
- *     tags: [Authentication]
  *     requestBody:
  *       required: true
  *       content:
@@ -119,11 +124,12 @@ router.post('/login', login);
 router.post('/google-login', googleLogin);
 
 /**
- * @swagger
+ * @openapi
  * /refresh-token:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Refresh access token using refresh token cookie
- *     tags: [Authentication]
  *     responses:
  *       200:
  *         description: New access token generated
@@ -135,11 +141,12 @@ router.post('/google-login', googleLogin);
 router.post('/refresh-token', refreshToken);
 
 /**
- * @swagger
+ * @openapi
  * /logout:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Logout user (clear refresh token cookie)
- *     tags: [Authentication]
  *     responses:
  *       200:
  *         description: Logout successful
@@ -147,18 +154,12 @@ router.post('/refresh-token', refreshToken);
 router.post('/logout', logout);
 
 /**
- * @swagger
- * tags:
- *   name: Password Reset
- *   description: Password reset and recovery
- */
-
-/**
- * @swagger
+ * @openapi
  * /forgot-password:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Request password reset email
- *     tags: [Password Reset]
  *     requestBody:
  *       required: true
  *       content:
@@ -181,11 +182,12 @@ router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 
 /**
- * @swagger
+ * @openapi
  * /reset-password/{token}:
  *   get:
+ *     tags: 
+ *        - User
  *     summary: Validate password reset token
- *     tags: [Password Reset]
  *     parameters:
  *       - in: path
  *         name: token
@@ -202,11 +204,12 @@ router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/:token', checkResetToken);
 
 /**
- * @swagger
+ * @openapi
  * /reset-password/{token}:
  *   post:
+ *     tags: 
+ *        - User
  *     summary: Reset password using token
- *     tags: [Password Reset]
  *     parameters:
  *       - in: path
  *         name: token
@@ -234,18 +237,12 @@ router.get('/reset-password/:token', checkResetToken);
 router.post('/reset-password/:token', resetPassword);
 
 /**
- * @swagger
- * tags:
- *   name: User Profile
- *   description: User profile management
- */
-
-/**
- * @swagger
+ * @openapi
  * /getProfile:
  *   get:
  *     summary: Get user profile
- *     tags: [User Profile]
+ *     tags: 
+ *        - User
  *     security:
  *       - cookieAuth: []
  *     responses:
@@ -257,11 +254,12 @@ router.post('/reset-password/:token', resetPassword);
 router.get('/getProfile', authenticate, getUserProfile);
 
 /**
- * @swagger
+ * @openapi
  * /updateProfile:
  *   put:
  *     summary: Update user profile description
- *     tags: [User Profile]
+ *     tags: 
+ *        - User
  *     security:
  *       - cookieAuth: []
  *     requestBody:
