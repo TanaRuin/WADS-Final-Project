@@ -1,9 +1,6 @@
-import swaggerJsDoc from "swagger-jsdoc";
-import path from 'path';
-import { fileURLToPath } from 'url';
+const swaggerJsDoc = require("swagger-jsdoc");
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 /**
  * @swagger
  * components:
@@ -174,15 +171,13 @@ const __dirname = path.dirname(__filename);
  *         createdAt: "2025-06-02T10:20:00Z"
  */
 
-
-
 const swaggerSpec = swaggerJsDoc({
   definition: {
       openapi: "3.0.3",
       info: {
           title: "Belantara Help Desk",
           version: "1.0.0",
-          description: "Help Desk for Bekantara.",
+          description: "Help Desk for Belantara.",
       },
       servers: [
           {
@@ -204,4 +199,4 @@ const swaggerSpec = swaggerJsDoc({
   ],
 });
 
-export default swaggerSpec;
+module.exports = swaggerSpec;
