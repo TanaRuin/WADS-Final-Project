@@ -36,6 +36,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: "Helpdesk API Documentation"
 }));
+
 // Ensure trust for reverse proxies (e.g., Nginx or cloud hosting)
 app.set('trust proxy', true);
 mongoose.set("strictQuery", true)
