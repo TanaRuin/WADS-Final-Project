@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 const corsOptions = {
   origin: "*",
-  credentials: true,
+  credentials: false,
 };
 
 app.use(cors(corsOptions))
@@ -34,8 +34,6 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: "Helpdesk API Documentation"
 }));
 // Ensure trust for reverse proxies (e.g., Nginx or cloud hosting)
