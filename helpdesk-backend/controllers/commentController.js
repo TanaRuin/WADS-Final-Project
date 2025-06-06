@@ -17,23 +17,29 @@ const getComments = async (req, res) => {
         // Get comments sorted by creation time
         const comments = await Comment.find({ ticketId }).sort({ createdAt: 1 });
 
-        // Format comments with user info
+        // Format comments with user info including profile picture
         const formattedComments = await Promise.all(
             comments.map(async (comment) => {
                 let authorName = 'Unknown User';
+                let profilePicture = null;
                 
                 try {
                     const user = await User.findOne({ userId: comment.userId });
-                    authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+                    if (user) {
+                        authorName = `${user.firstName} ${user.lastName}`;
+                        profilePicture = user.profileImage || null; // Add this line
+                    }
                 } catch (err) {
                     authorName = 'Unknown User';
+                    profilePicture = null;
                 }
 
                 return {
                     id: comment.commentId,
                     author: authorName,
                     message: comment.content,
-                    timestamp: comment.createdAt.toISOString()
+                    timestamp: comment.createdAt.toISOString(),
+                    profilePicture: profilePicture // Add this line
                 };
             })
         );
@@ -88,7 +94,8 @@ const addComment = async (req, res) => {
             id: newComment.commentId,
             author: authorName,
             message: newComment.content,
-            timestamp: newComment.createdAt.toISOString()
+            timestamp: newComment.createdAt.toISOString(),
+            profilePicture: user.profileImage || null // Add this line
         };
 
         res.status(201).json(responseComment);

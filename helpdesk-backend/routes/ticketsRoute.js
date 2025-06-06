@@ -50,7 +50,7 @@ const { authenticate, authorizeLevel } = require('../middleware/authMiddleware')
  *       500:
  *         description: Server error
  */
-router.get('/getall', getAllTickets);
+router.get('/getall', authenticate, getAllTickets);
 
 /**
  * @swagger
@@ -105,7 +105,7 @@ router.get('/user',authenticate, getTicketsByUserId)
  *       500:
  *         description: Server error
  */
-router.post('/close/:ticketId', closeTicket);
+router.post('/close/:ticketId', authenticate, closeTicket);
 
 module.exports = router;
 

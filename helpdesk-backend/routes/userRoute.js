@@ -12,6 +12,8 @@ const {
   forgotPassword,
   resetPassword,
   checkResetToken,
+  registeradmin,
+  uploadProfilePicture
 } = require('../controllers/userController');
 
 const { authenticate } = require('../middleware/authMiddleware');
@@ -55,6 +57,8 @@ const { authenticate } = require('../middleware/authMiddleware');
  *         description: Failed to register user
  */
 router.post('/register', register);
+
+router.post('/register-admin', registeradmin);
 /**
  * @swagger
  * /login:
@@ -180,6 +184,7 @@ router.post('/logout', logout);
  */
 router.post('/forgot-password', forgotPassword);
 
+
 /**
  * @swagger
  * /reset-password/{token}:
@@ -281,6 +286,9 @@ router.get('/getProfile', authenticate, getUserProfile);
  *         description: Unauthorized
  */
 router.put('/updateProfile', authenticate, updateUserProfile);
+
+router.post('/uploadpfp', authenticate, uploadProfilePicture);
+
 
 module.exports = router;
 

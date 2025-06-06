@@ -133,7 +133,37 @@ const register = async (req, res) => {
   }
 };
 
+const registeradmin = async (req, res) => {
+  try {
+    const { firstName, lastName, email, username, password } = req.body;
 
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email already in use' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      userId: uuidv4(),
+      firstName,
+      lastName,
+      username,
+      email,
+      password: hashedPassword,
+      accessLevel: 'admin',
+    });
+
+    await newUser.save();
+
+
+    res.status(201).json({ success: true, message: 'Admin registered successfully' });
+  } catch (error) {
+    console.error('Error registering admin:', error);
+    res.status(500).json({ success: false, message: 'Failed to register admin', error: error.message });
+  }
+};
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -169,6 +199,49 @@ const login = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
+const uploadProfilePicture = async (req, res) => {
+  try {
+    const { image } = req.body;
+    const cloudinary = req.app.get('cloudinary');
+
+    if (!image) {
+      return res.status(400).json({ success: false, message: 'No image provided' });
+    }
+
+    const result = await cloudinary.uploader.upload(image, {
+      folder: 'profile-pictures',
+      public_id: `user-${req.user.userId}`, 
+      overwrite: true
+    });
+
+    const updatedUser = await User.findOneAndUpdate(
+      { userId: req.user.userId },
+      { profileImage: result.secure_url },
+      { new: true } 
+    ).select('-password'); 
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile picture updated successfully',
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    res.status(500).json({ success: false, message: 'Upload failed', error: error.message });
+  }
+};
+
+module.exports = {
+  uploadProfilePicture
+};
+
 
 
 
@@ -294,7 +367,7 @@ const getUserProfile = async (req, res) => {
     const userId = req.user.userId;
 
 
-    const user = await User.findOne({ userId }).select('firstName lastName email accessLevel description profileImage');
+    const user = await User.findOne({ userId }).select('firstName lastName email username accessLevel description profileImage');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -351,9 +424,6 @@ const updateUserProfile = async (req, res) => {
 };
 
 
-
-
-
 module.exports = {
   getUserProfile,
   updateUserProfile,
@@ -365,5 +435,7 @@ module.exports = {
   googleLogin,
   forgotPassword,
   resetPassword,
+  registeradmin,
+  uploadProfilePicture
 
 };

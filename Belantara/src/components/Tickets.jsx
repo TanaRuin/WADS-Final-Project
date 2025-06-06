@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, ArrowLeft, Paperclip } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ArrowLeft, Paperclip, User } from 'lucide-react';
 import api from '../api/axiosInstance';
 
 const Tickets = () => {
@@ -11,6 +11,9 @@ const Tickets = () => {
   const [addingComment, setAddingComment] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  
+  // Ref to store the polling interval
+  const pollingIntervalRef = useRef(null);
 
   // Fetch all tickets
   const fetchTickets = async () => {
@@ -39,14 +42,34 @@ const Tickets = () => {
     }
   };
 
-  // Fetch comments for a ticket
-  const fetchComments = async (ticketId) => {
+  // Fetch ticket silently (without loading state) for polling
+  const fetchTicketSilently = async (ticketId) => {
     try {
-      const { data } = await api.get(`/comment/get/${ticketId}`);
-      return data;
+      const { data } = await api.get(`/ticket/get/${ticketId}`);
+      setSelectedTicket(data);
     } catch (error) {
-      console.error('Error fetching comments:', error);
-      return [];
+      console.error('Error fetching ticket silently:', error);
+    }
+  };
+
+  // Start polling for ticket updates
+  const startPolling = (ticketId) => {
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+    
+    // Poll every 5 seconds (adjust as needed)
+    pollingIntervalRef.current = setInterval(() => {
+      fetchTicketSilently(ticketId);
+    }, 5000);
+  };
+
+  // Stop polling
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
   };
 
@@ -56,20 +79,20 @@ const Tickets = () => {
     try {
       console.log('Sending comment:', content);
       const { data } = await api.post(
-        `/comments/add/${ticketId}`,
+        `/comment/add/${ticketId}`,
         { content });
 
       // Refresh the ticket to get updated comments and potentially updated status
       await fetchTicketById(ticketId);
       console.log('Refetched ticket');
       return data;
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    throw error;
-  } finally {
-    setAddingComment(false);
-  }
-};
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    } finally {
+      setAddingComment(false);
+    }
+  };
 
   // Close ticket
   const closeTicket = async (ticketId) => {
@@ -97,8 +120,15 @@ const Tickets = () => {
   // Handle back to tickets list
   const handleBackToTickets = () => {
     setSelectedTicket(null);
+    stopPolling(); // Stop polling when leaving ticket view
     // Remove ticket ID from URL
     window.history.pushState({}, '', window.location.pathname);
+  };
+
+  // Handle ticket selection
+  const handleTicketSelect = (ticketId) => {
+    fetchTicketById(ticketId);
+    startPolling(ticketId); // Start polling when viewing a ticket
   };
 
   // Get status text and color
@@ -114,12 +144,12 @@ const Tickets = () => {
 
   // Filter tickets based on search
   const filteredTickets = tickets.filter(ticket =>
-    (statusFilter === '' || ticket.status == statusFilter) &&
+    (statusFilter === '' || ticket.status === statusFilter) &&
     (priorityFilter === '' || ticket.priority === priorityFilter) &&
     (
-    ticket.issue?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      (ticket.Issue || ticket.issue)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.user?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.description?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
@@ -148,8 +178,27 @@ const Tickets = () => {
     const ticketId = urlParams.get('ticket');
     if (ticketId) {
       fetchTicketById(ticketId);
+      startPolling(ticketId); // Start polling for URL-loaded ticket
     }
+
+    // Cleanup polling on component unmount
+    return () => {
+      stopPolling();
+    };
   }, []);
+
+  // Cleanup polling when selectedTicket changes
+  useEffect(() => {
+    if (selectedTicket) {
+      startPolling(selectedTicket.ticketId);
+    } else {
+      stopPolling();
+    }
+    
+    return () => {
+      stopPolling();
+    };
+  }, [selectedTicket?.ticketId]);
 
   if (selectedTicket) {
     const statusDisplay = getStatusDisplay(selectedTicket.status);
@@ -161,7 +210,10 @@ const Tickets = () => {
           <div className="flex items-center mb-6">
             <button
               onClick={handleBackToTickets}
-              className="flex items-center text-blue-600 hover:text-blue-800 mr-4"
+              className="flex items-center mr-4 transition-colors"
+              style={{ color: '#2563eb' }}
+              onMouseEnter={(e) => e.target.style.color = '#1d4ed8'}
+              onMouseLeave={(e) => e.target.style.color = '#2563eb'}
             >
               <ArrowLeft className="w-5 h-5 mr-1" />
               Back to Tickets
@@ -172,7 +224,9 @@ const Tickets = () => {
             {/* Ticket Details */}
             <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-start mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">{selectedTicket.issue}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {selectedTicket.Issue || selectedTicket.issue}
+                </h1>
                 <div className="flex items-center space-x-2">
                   <span className={`w-3 h-3 rounded-full ${statusDisplay.color}`}></span>
                   <span className="text-sm font-medium">{statusDisplay.text}</span>
@@ -195,6 +249,10 @@ const Tickets = () => {
                 <div>
                   <span className="text-gray-500">Priority</span>
                   <p className="font-semibold">{selectedTicket.priority}</p>
+                </div>
+                <div>
+                  <span className="text-grey-500">Issue</span>
+                  <p className="font-semibold">{selectedTicket.Issue}</p>
                 </div>
               </div>
 
@@ -237,13 +295,10 @@ const Tickets = () => {
               {selectedTicket.status !== 'closed' && (
                 <button
                   onClick={() => closeTicket(selectedTicket.ticketId)}
-                  style={{
-                    backgroundColor: '#dc2626', 
-                    color: 'white',
-                    padding: '0.5rem 1rem', 
-                    borderRadius: '0.5rem',
-                    transition: 'background-color 0.2s ease-in-out', 
-                  }}
+                  className="px-4 py-2 rounded-lg transition-colors text-white"
+                  style={{ backgroundColor: '#dc2626' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#b91c1c'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#dc2626'}
                 >
                   Close Ticket
                 </button>
@@ -259,13 +314,30 @@ const Tickets = () => {
                 {selectedTicket.comments && selectedTicket.comments.length > 0 ? (
                   selectedTicket.comments.map((comment, index) => (
                     <div key={comment.id || index} className="border-b border-gray-100 pb-3 last:border-b-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="font-semibold text-sm">{comment.author}</span>
-                        <span className="text-xs text-gray-500">
-                          {formatTimestamp(comment.timestamp)}
-                        </span>
+                      <div className="flex items-start space-x-3 mb-2">
+                        {/* Profile Picture */}
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                          {comment.profilePicture ? (
+                            <img 
+                              src={comment.profilePicture} 
+                              alt={comment.author}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <span className="font-semibold text-sm text-gray-900">{comment.author}</span>
+                            <span className="text-xs text-gray-500 ml-2">
+                              {formatTimestamp(comment.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mt-1">{comment.message}</p>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-700">{comment.message}</p>
                     </div>
                   ))
                 ) : (
@@ -286,14 +358,20 @@ const Tickets = () => {
                 <button
                   onClick={handleAddComment}
                   disabled={addingComment || !newComment.trim()}
-                  style={{
-                    marginTop: '0.5rem',
+                  className="mt-2 px-4 py-2 rounded-lg transition-colors text-white"
+                  style={{ 
                     backgroundColor: addingComment || !newComment.trim() ? '#9ca3af' : '#2563eb',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    transition: 'background-color 0.2s ease-in-out',
-                    cursor: addingComment || !newComment.trim() ? 'not-allowed' : 'pointer',
+                    cursor: addingComment || !newComment.trim() ? 'not-allowed' : 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!addingComment && newComment.trim()) {
+                      e.target.style.backgroundColor = '#1d4ed8';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!addingComment && newComment.trim()) {
+                      e.target.style.backgroundColor = '#2563eb';
+                    }
                   }}
                 >
                   {addingComment ? 'Sending...' : 'Send'}
@@ -310,13 +388,13 @@ const Tickets = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center mb-6 space-y-4 sm:space-y-0 sm:space-x-4">
           {/* Status Filter */}
-          <div>
+          <div className="w-full sm:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Status</option>
               <option value="open">Open</option>
@@ -324,12 +402,13 @@ const Tickets = () => {
               <option value="closed">Closed</option>
             </select>
           </div>
-            {/* Priority Filter */}
-          <div>
+          
+          {/* Priority Filter */}
+          <div className="w-full sm:w-auto">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -337,14 +416,16 @@ const Tickets = () => {
               <option value="high">High</option>
             </select>
           </div>
-          <div className="relative">
+          
+          {/* Search */}
+          <div className="relative w-full sm:w-auto">
             <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search tickets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -369,7 +450,7 @@ const Tickets = () => {
                   return (
                     <tr
                       key={ticket.ticketId || ticket.code}
-                      onClick={() => fetchTicketById(ticket.ticketId)}
+                      onClick={() => handleTicketSelect(ticket.ticketId)}
                       className="hover:bg-gray-50 cursor-pointer transition-colors"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.user}</td>
@@ -378,7 +459,9 @@ const Tickets = () => {
                         <span className="text-sm text-gray-900">{statusDisplay.text}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.issue}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {ticket.Issue || ticket.issue}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.priority}</td>
                     </tr>
                   );
