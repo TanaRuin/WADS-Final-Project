@@ -6,6 +6,7 @@ import AuthPage from './pages/auth';
 import ResetPasswordPage from './pages/reset';
 import UserPage from './pages/user'; // Make sure this import is correct
 
+
 const App = () => {
   return (
     <Router>

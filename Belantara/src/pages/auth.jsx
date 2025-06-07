@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../config/firebase';
 import belantaraImage from '../assets/imagesbelantara.png';
 import api from '../api/axiosInstance';
 
@@ -27,20 +29,35 @@ function AuthPage({ view = 'login' }) {
     setError('');
   };
 
-  // Fixed function name to match the button onClick
-  const handleGoogleLogin = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = 'http://localhost:5173/auth/google/callback'; // your redirect URI
-    const scope = encodeURIComponent('openid email profile');
-    const responseType = 'code';
-    const accessType = 'offline';
-    const prompt = 'consent';
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      // Store the user's data
+      localStorage.setItem('user', JSON.stringify({
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL
+      }));
 
-    const oauth2Url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&response_type=${responseType}&scope=${scope}&access_type=${accessType}&prompt=${prompt}`;
+      // Store the access token
+      const token = await result.user.getIdToken();
+      localStorage.setItem('accessToken', token);
+      
+      // Set admin access level
+      localStorage.setItem('accessLevel', 'admin');
 
-    window.location.href = oauth2Url;
+      // Navigate to admin page instead of dashboard
+      navigate('/admin');
+    } catch (error) {
+      console.error('Google Sign In Error:', error);
+      setError(error.message || 'Failed to sign in with Google');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoginSubmit = async (e) => {
@@ -216,12 +233,12 @@ function AuthPage({ view = 'login' }) {
 
       <button
         type="button"
+        onClick={handleGoogleLogin}
         disabled={loading || !googleLoaded}
         className="w-full text-gray-700 py-2 px-4 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
         style={{ backgroundColor: loading || !googleLoaded ? '#f3f4f6' : '#ffffff' }}
         onMouseEnter={(e) => (!loading && googleLoaded) && (e.target.style.backgroundColor = '#f9fafb')}
         onMouseLeave={(e) => (!loading && googleLoaded) && (e.target.style.backgroundColor = '#ffffff')}
-        onClick={handleGoogleLogin}
       >
         <FontAwesomeIcon icon={faGoogle} className="mr-2" style={{ color: '#ea4335' }} />
         {!googleLoaded ? 'Loading Google...' : loading ? 'Signing in...' : 'Sign in with Google'}

@@ -2,8 +2,10 @@ import { Settings, Ticket, LayoutDashboard, Menu, X } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faTwitter, faLinkedin, faInstagram } from '@fortawesome/free-brands-svg-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import belantaraImage from '../assets/belantara.png';
-import api from '../api/axiosInstance';
+import axios from 'axios';
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const navigate = useNavigate();
@@ -13,20 +15,36 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     navigate(path);
     setSidebarOpen(false);
   };
+
   const handleLogout = async () => {
-  try {
-    await api.post('/user/logout', {}, {
-      withCredentials: true,
-    });
+    try {
+      // Try Firebase logout
+      try {
+        await signOut(auth);
+      } catch (firebaseError) {
+        console.log('Firebase logout error:', firebaseError);
+      }
 
-    localStorage.removeItem('accessToken');
+      // Try regular session logout
+      try {
+        await axios.post('https://e2425-wads-l4ccg5-server.csbihub.id/api/user/logout', {}, {
+          withCredentials: true,
+        });
+      } catch (axiosError) {
+        console.log('Session logout error:', axiosError);
+      }
 
-    navigate('/login');
-  } catch (error) {
-    console.error('Logout failed:', error);
-  }
-};
+      // Clear all local storage data
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('accessLevel');
+      localStorage.removeItem('user');
 
+      // Navigate to login page
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <>
