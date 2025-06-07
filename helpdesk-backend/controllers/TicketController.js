@@ -49,19 +49,17 @@ const getAllTickets = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 //get ticket by User ID
 const getTicketsByUserId = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-    
         const tickets = await Ticket.find({ userId });
-
 
         if (!tickets || tickets.length === 0) {
             return res.status(404).json({ message: "No tickets found for this user." });
         }
-
 
         let userName = 'Unknown User';
         try {
@@ -80,19 +78,23 @@ const getTicketsByUserId = async (req, res) => {
                 const formattedComments = await Promise.all(
                     comments.map(async (comment) => {
                         let authorName = 'Unknown User';
+                        let profilePicture = null;
                         
                         try {
-                            const user = await User.findOne({ userId: comment.userId });
-                            authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+                            const commentUser = await User.findOne({ userId: comment.userId });
+                            authorName = commentUser ? `${commentUser.firstName} ${commentUser.lastName}` : 'Unknown User';
+                            profilePicture = commentUser?.profileImage || null;
                         } catch (err) {
                             authorName = 'Unknown User';
+                            profilePicture = null;
                         }
 
                         return {
                             id: comment.commentId,
                             author: authorName,
                             message: comment.content,
-                            timestamp: comment.createdAt.toISOString()
+                            timestamp: comment.createdAt.toISOString(),
+                            profilePicture: profilePicture
                         };
                     })
                 );
@@ -143,6 +145,7 @@ const createTicket = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getTicketById = async (req, res) => {
     try {
         const { ticketId } = req.params;
@@ -167,36 +170,40 @@ const getTicketById = async (req, res) => {
         const formattedComments = await Promise.all(
             comments.map(async (comment) => {
                 let authorName = 'Unknown User';
+                let profilePicture = null;
 
                 try {
-                    const user = await User.findOne({ userId: comment.userId });
-                    authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+                    const commentUser = await User.findOne({ userId: comment.userId });
+                    authorName = commentUser ? `${commentUser.firstName} ${commentUser.lastName}` : 'Unknown User';
+                    profilePicture = commentUser?.profileImage || null;
                 } catch (err) {
                     authorName = 'Unknown User';
+                    profilePicture = null;
                 }
 
                 return {
                     id: comment.commentId,
                     author: authorName,
                     message: comment.content,
-                    timestamp: comment.createdAt.toISOString()
+                    timestamp: comment.createdAt.toISOString(),
+                    profilePicture: profilePicture
                 };
             })
         );
 
         const ticketData = ticket.toObject();
         const formattedTicket = {
-    ticketId: ticketData.ticketId,
-    user: userName,
-    createdAt: ticketData.createdAt.toISOString(), // Add this
-    dateIssued: new Date(ticketData.createdAt).toLocaleDateString('en-GB'),
-    status: ticketData.status,
-    category: ticketData.category,
-    Issue: ticketData.Issue,  // Uppercase 'I'
-    priority: ticketData.priority,
-    description: ticketData.description,
-    comments: formattedComments
-};
+            ticketId: ticketData.ticketId,
+            user: userName,
+            createdAt: ticketData.createdAt.toISOString(),
+            dateIssued: new Date(ticketData.createdAt).toLocaleDateString('en-GB'),
+            status: ticketData.status,
+            category: ticketData.category,
+            Issue: ticketData.Issue,
+            priority: ticketData.priority,
+            description: ticketData.description,
+            comments: formattedComments
+        };
 
         res.status(200).json(formattedTicket);
     } catch (error) {
@@ -204,7 +211,6 @@ const getTicketById = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 };
-
 
 // Close a ticket
 const closeTicket = async (req, res) => {

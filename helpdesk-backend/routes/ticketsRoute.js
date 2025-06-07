@@ -1,4 +1,5 @@
 const express = require('express');
+const router = express.Router();
 const {
   getAllTickets,
   getTicketById,
@@ -9,17 +10,15 @@ const {
 
 const { authenticate, authorizeLevel } = require('../middleware/authMiddleware');
 
-const router = express.Router();
-
 // /**
-//  * @openapi
+//  * @swagger
 //  * tags:
 //  *   name: Tickets
 //  *   description: Ticket management endpoints
 //  */
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /getall:
 //  *   get:
 //  *     summary: Get all tickets with optional filters
@@ -51,10 +50,10 @@ const router = express.Router();
 //  *       500:
 //  *         description: Server error
 //  */
-router.get('/getall', getAllTickets);
+router.get('/getall', authenticate, getAllTickets);
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /get/{ticketId}:
 //  *   get:
 //  *     summary: Get a ticket by its ID
@@ -86,7 +85,7 @@ router.get('/user',authenticate, getTicketsByUserId)
 
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /close/{ticketId}:
 //  *   post:
 //  *     summary: Close a ticket
@@ -106,9 +105,14 @@ router.get('/user',authenticate, getTicketsByUserId)
 //  *       500:
 //  *         description: Server error
 //  */
-router.post('/close/:ticketId', closeTicket);
+router.post('/close/:ticketId', authenticate, closeTicket);
 
 module.exports = router;
+
+
+
+
+
 
 
 

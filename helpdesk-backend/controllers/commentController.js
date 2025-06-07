@@ -17,23 +17,29 @@ const getComments = async (req, res) => {
         // Get comments sorted by creation time
         const comments = await Comment.find({ ticketId }).sort({ createdAt: 1 });
 
-        // Format comments with user info
+        // Format comments with user info including profile picture
         const formattedComments = await Promise.all(
             comments.map(async (comment) => {
                 let authorName = 'Unknown User';
+                let profilePicture = null;
                 
                 try {
                     const user = await User.findOne({ userId: comment.userId });
-                    authorName = user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+                    if (user) {
+                        authorName = `${user.firstName} ${user.lastName}`;
+                        profilePicture = user.profileImage || null; // Add this line
+                    }
                 } catch (err) {
                     authorName = 'Unknown User';
+                    profilePicture = null;
                 }
 
                 return {
                     id: comment.commentId,
                     author: authorName,
                     message: comment.content,
-                    timestamp: comment.createdAt.toISOString()
+                    timestamp: comment.createdAt.toISOString(),
+                    profilePicture: profilePicture // Add this line
                 };
             })
         );
@@ -61,7 +67,7 @@ const addComment = async (req, res) => {
         }
 
         // Get user info before creating comment
-        const user = await User.findOne({ userId: req.user.id });
+        const user = await User.findOne({ userId: req.user.userId });
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -70,7 +76,7 @@ const addComment = async (req, res) => {
         const newComment = new Comment({
             commentId: uuidv4(),
             ticketId,
-            userId: req.user.id,
+            userId: req.user.userId,
             content: content.trim()
         });
 
@@ -88,11 +94,13 @@ const addComment = async (req, res) => {
             id: newComment.commentId,
             author: authorName,
             message: newComment.content,
-            timestamp: newComment.createdAt.toISOString()
+            timestamp: newComment.createdAt.toISOString(),
+            profilePicture: user.profileImage || null // Add this line
         };
 
         res.status(201).json(responseComment);
     } catch (error) {
+        console.error("addComment error:", error);
         res.status(500).json({ message: error.message });
     }
 };

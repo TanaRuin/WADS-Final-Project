@@ -1,4 +1,5 @@
 const express = require('express');
+const router = express.Router();
 
 const {
   getUserProfile,
@@ -11,28 +12,19 @@ const {
   forgotPassword,
   resetPassword,
   checkResetToken,
+  registeradmin,
+  uploadProfilePicture
 } = require('../controllers/userController');
 
 const { authenticate } = require('../middleware/authMiddleware');
 
-const router = express.Router();
-
-// /**
-//  * @openapi
-//  * tags:
-//  *    - name: User
-//  *      description: User and authentication related operations
-//  */
-
 // Auth routes
-
 // /**
-//  * @openapi
+//  * @swagger
 //  * /register:
 //  *   post:
-//  *     tags: 
-//  *       - User
 //  *     summary: Register a new user
+//  *     tags: [Auth]
 //  *     requestBody:
 //  *       required: true
 //  *       content:
@@ -66,13 +58,13 @@ const router = express.Router();
 //  */
 router.post('/register', register);
 
+router.post('/register-admin', registeradmin);
 // /**
-//  * @openapi
+//  * @swagger
 //  * /login:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Login user
+//  *     tags: [Auth]
 //  *     requestBody:
 //  *       required: true
 //  *       content:
@@ -95,13 +87,20 @@ router.post('/register', register);
 //  */
 router.post('/login', login);
 
+
 // /**
-//  * @openapi
+//  * @swagger
+//  * tags:
+//  *   name: Authentication
+//  *   description: Authentication related endpoints
+//  */
+
+// /**
+//  * @swagger
 //  * /google-login:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Login or register user via Google OAuth
+//  *     tags: [Authentication]
 //  *     requestBody:
 //  *       required: true
 //  *       content:
@@ -124,12 +123,11 @@ router.post('/login', login);
 router.post('/google-login', googleLogin);
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /refresh-token:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Refresh access token using refresh token cookie
+//  *     tags: [Authentication]
 //  *     responses:
 //  *       200:
 //  *         description: New access token generated
@@ -141,12 +139,11 @@ router.post('/google-login', googleLogin);
 router.post('/refresh-token', refreshToken);
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /logout:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Logout user (clear refresh token cookie)
+//  *     tags: [Authentication]
 //  *     responses:
 //  *       200:
 //  *         description: Logout successful
@@ -154,12 +151,18 @@ router.post('/refresh-token', refreshToken);
 router.post('/logout', logout);
 
 // /**
-//  * @openapi
+//  * @swagger
+//  * tags:
+//  *   name: Password Reset
+//  *   description: Password reset and recovery
+//  */
+
+// /**
+//  * @swagger
 //  * /forgot-password:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Request password reset email
+//  *     tags: [Password Reset]
 //  *     requestBody:
 //  *       required: true
 //  *       content:
@@ -181,13 +184,13 @@ router.post('/logout', logout);
 //  */
 router.post('/forgot-password', forgotPassword);
 
+
 // /**
-//  * @openapi
+//  * @swagger
 //  * /reset-password/{token}:
 //  *   get:
-//  *     tags: 
-//  *        - User
 //  *     summary: Validate password reset token
+//  *     tags: [Password Reset]
 //  *     parameters:
 //  *       - in: path
 //  *         name: token
@@ -204,12 +207,11 @@ router.post('/forgot-password', forgotPassword);
 router.get('/reset-password/:token', checkResetToken);
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /reset-password/{token}:
 //  *   post:
-//  *     tags: 
-//  *        - User
 //  *     summary: Reset password using token
+//  *     tags: [Password Reset]
 //  *     parameters:
 //  *       - in: path
 //  *         name: token
@@ -237,12 +239,18 @@ router.get('/reset-password/:token', checkResetToken);
 router.post('/reset-password/:token', resetPassword);
 
 // /**
-//  * @openapi
+//  * @swagger
+//  * tags:
+//  *   name: User Profile
+//  *   description: User profile management
+//  */
+
+// /**
+//  * @swagger
 //  * /getProfile:
 //  *   get:
 //  *     summary: Get user profile
-//  *     tags: 
-//  *        - User
+//  *     tags: [User Profile]
 //  *     security:
 //  *       - cookieAuth: []
 //  *     responses:
@@ -251,15 +259,14 @@ router.post('/reset-password/:token', resetPassword);
 //  *       401:
 //  *         description: Unauthorized
 //  */
-router.get('/getProfile', authenticate, getUserProfile);
+// router.get('/getProfile', authenticate, getUserProfile);
 
 // /**
-//  * @openapi
+//  * @swagger
 //  * /updateProfile:
 //  *   put:
 //  *     summary: Update user profile description
-//  *     tags: 
-//  *        - User
+//  *     tags: [User Profile]
 //  *     security:
 //  *       - cookieAuth: []
 //  *     requestBody:
@@ -280,7 +287,12 @@ router.get('/getProfile', authenticate, getUserProfile);
 //  */
 router.put('/updateProfile', authenticate, updateUserProfile);
 
+router.post('/uploadpfp', authenticate, uploadProfilePicture);
+
+
 module.exports = router;
+
+
 
 
 

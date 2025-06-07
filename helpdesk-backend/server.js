@@ -4,8 +4,9 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const mongoose = require('mongoose');
-const swaggerSpec = require('./utils/swagger.js').default;
 const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./utils/swagger');
+const cloudinary = require('cloudinary').v2;
 
 const commentsRoutes = require('./routes/commentsRoute');
 const ticketsRoutes = require('./routes/ticketsRoute');
@@ -14,9 +15,14 @@ const userRoutes = require('./routes/userRoute');
 const dashboardRoutes = require('./routes/dashboardRoute');
 
 
+
 const app = express();
 
 dotenv.config();
+
+
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Middleware
 app.use(express.json());
@@ -31,6 +37,16 @@ app.use(cors(corsOptions))
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Cloudinary configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Make cloudinary available in req.app.get('cloudinary')
+app.set('cloudinary', cloudinary);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
