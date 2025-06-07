@@ -75,3 +75,6 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          CLOUDINARY_CLOUD_NAME: ${{secrets.CLOUDINARY_CLOUD_NAME}}
+          CLOUDINARY_API_KEY: ${{secrets.CLOUDINARY_API_KEY}}
+          CLOUDINARY_API_SECRET: ${{secrets.CLOUDINARY_API_SECRET}}
