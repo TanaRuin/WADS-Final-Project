@@ -1,165 +1,40 @@
-const express = require('express');
+import express from 'express';
+import { activateEmail, signIn, signUp, userInfor } from '../controllers/users.js';
+import { auth } from '../middleware/auth.js';
 
-const {
-  getUserProfile,
-  updateUserProfile,
-  register,
-  login,
-  refreshToken,
-  logout,
-  googleLogin,
-  forgotPassword,
-  resetPassword,
-  checkResetToken,
-} = require('../controllers/userController');
-
-const { authenticate } = require('../middleware/authMiddleware');
-
-const router = express.Router();
+const router = express.Router()
 
 /**
  * @openapi
  * tags:
- *    - name: User
- *      description: User and authentication related operations
+ *   - name: User
+ *     description: User related operations
  */
-
-// Auth routes
 
 /**
  * @openapi
- * /register:
- *   post:
- *     tags: 
+ * /user-infor:
+ *   get:
+ *     tags:
  *       - User
- *     summary: Register a new user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *               - email
- *               - username
- *               - password
- *             properties:
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               email:
- *                 type: string
- *               username:
- *                 type: string
- *               password:
- *                 type: string
+ *     summary: Get user information (need auth)
  *     responses:
- *       201:
- *         description: User registered successfully
- *       400:
- *         description: Email already in use
- *       500:
- *         description: Failed to register user
- */
-router.post('/register', register);
-
-/**
- * @openapi
- * /login:
- *   post:
- *     tags: 
- *        - User
- *     summary: Login user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - username
- *               - password
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *       400:
- *         description: Invalid credentials
- */
-router.post('/login', login);
-
-/**
- * @openapi
- * /google-login:
- *   post:
- *     tags: 
- *        - User
- *     summary: Login or register user via Google OAuth
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               code:
- *                 type: string
- *                 description: Google OAuth authorization code
- *                 example: "4/0AX4XfWhX..."
- *     responses:
- *       200:
- *         description: Successful login
- *       400:
- *         description: Bad request, missing code
- *       500:
+ *       '200':
+ *         description: User information retrieved
+ *       '403':
+ *         description: Unauthorized
+ *       '500':
  *         description: Internal server error
  */
-router.post('/google-login', googleLogin);
+router.get("/user-infor", auth, userInfor)
 
 /**
  * @openapi
- * /refresh-token:
+ * /signup:
  *   post:
- *     tags: 
- *        - User
- *     summary: Refresh access token using refresh token cookie
- *     responses:
- *       200:
- *         description: New access token generated
- *       401:
- *         description: Refresh token not found
- *       403:
- *         description: Invalid refresh token
- */
-router.post('/refresh-token', refreshToken);
-
-/**
- * @openapi
- * /logout:
- *   post:
- *     tags: 
- *        - User
- *     summary: Logout user (clear refresh token cookie)
- *     responses:
- *       200:
- *         description: Logout successful
- */
-router.post('/logout', logout);
-
-/**
- * @openapi
- * /forgot-password:
- *   post:
- *     tags: 
- *        - User
- *     summary: Request password reset email
+ *     tags:
+ *       - User
+ *     summary: Sign up a new user
  *     requestBody:
  *       required: true
  *       content:
@@ -167,101 +42,47 @@ router.post('/logout', logout);
  *           schema:
  *             type: object
  *             properties:
- *               identifier:
+ *               personal_id:
  *                 type: string
- *                 description: Email or username for password reset
- *                 example: user@example.com
- *     responses:
- *       200:
- *         description: Password reset email sent
- *       404:
- *         description: User not found
- *       500:
- *         description: Failed to send reset email
- */
-router.post('/forgot-password', forgotPassword);
-
-/**
- * @openapi
- * /reset-password/{token}:
- *   get:
- *     tags: 
- *        - User
- *     summary: Validate password reset token
- *     parameters:
- *       - in: path
- *         name: token
- *         required: true
- *         schema:
- *           type: string
- *         description: Password reset token
- *     responses:
- *       200:
- *         description: Token is valid
- *       400:
- *         description: Invalid or expired token
- */
-router.get('/reset-password/:token', checkResetToken);
-
-/**
- * @openapi
- * /reset-password/{token}:
- *   post:
- *     tags: 
- *        - User
- *     summary: Reset password using token
- *     parameters:
- *       - in: path
- *         name: token
- *         required: true
- *         schema:
- *           type: string
- *         description: Password reset token
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
+ *                 example: "BN12363468"
+ *               name:
+ *                 type: string
+ *                 example: "juwono"
+ *               email:
+ *                 type: string
+ *                 example: "juwono@gmail.com"
  *               password:
  *                 type: string
- *                 description: New password
- *                 example: "NewPass123!"
+ *                 example: "Password123"
+ *               confirmPassword:
+ *                 type: string
+ *                 example: "Password123"
+ *               address:
+ *                 type: string
+ *                 example: "Bandung, Indonesia"
+ *               phone_number:
+ *                 type: string
+ *                 example: "089286382736431"
  *     responses:
- *       200:
- *         description: Password reset successful
- *       400:
- *         description: Invalid or expired token
+ *       '200':
+ *         description: New user registration successfully
+ *       '403':
+ *         description: Requested resource is forbidden
+ *       '400':
+ *         description: Bad request
+ *       '500':
+ *         description: Internal server error
  */
-router.post('/reset-password/:token', resetPassword);
+router.post("/signup", signUp)
+
 
 /**
  * @openapi
- * /getProfile:
- *   get:
- *     summary: Get user profile
- *     tags: 
- *        - User
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: User profile retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get('/getProfile', authenticate, getUserProfile);
-
-/**
- * @openapi
- * /updateProfile:
- *   put:
- *     summary: Update user profile description
- *     tags: 
- *        - User
- *     security:
- *       - cookieAuth: []
+ * /activation:
+ *   post:
+ *     tags:
+ *       - User
+ *     summary: Activate user email
  *     requestBody:
  *       required: true
  *       content:
@@ -269,18 +90,52 @@ router.get('/getProfile', authenticate, getUserProfile);
  *           schema:
  *             type: object
  *             properties:
- *               description:
+ *               activation_token:
  *                 type: string
- *                 example: "This is my new profile description."
+ *                 example: "your_activation_token"
  *     responses:
- *       200:
- *         description: Profile updated successfully
- *       401:
- *         description: Unauthorized
+ *       '200':
+ *         description: Activation successful
+ *       '400':
+ *         description: Bad request
+ *       '500':
+ *         description: Internal server error
  */
-router.put('/updateProfile', authenticate, updateUserProfile);
+router.post("/activation", activateEmail)
 
-module.exports = router;
+/**
+ * @openapi
+ * /signin:
+ *   post:
+ *     tags:
+ *       - User
+ *     summary: Sign in user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "juwono@gmail.com"
+ *               password:
+ *                 type: string
+ *                 example: "Password123"
+ *     responses:
+ *       '200':
+ *         description: Sign in successfully
+ *       '403':
+ *         description: Requested resource is forbidden
+ *       '400':
+ *         description: Bad request
+ *       '500':
+ *         description: Internal server error
+ */
+router.post("/signin", signIn)
+
+export default router
 
 
 
