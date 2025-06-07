@@ -1,18 +1,15 @@
 const express = require('express');
+const router = express.Router();
 
 const {
   getComments,
   addComment,
 } = require('../controllers/commentController');
 
-const router = express.Router();
+const { authenticate, authorizeLevel } = require('../middleware/authMiddleware');
 
-/**
- * @openapi
- * tags:
- *    - name: Comments
- *      description: Comment related operations
- */
+
+
 
 /**
  * @openapi
@@ -52,7 +49,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/get/:ticketId', getComments);
+router.get('/get/:ticketId', authenticate, getComments);
 
 /**
  * @openapi
@@ -104,7 +101,7 @@ router.get('/get/:ticketId', getComments);
  *       500:
  *         description: Internal server error
  */
-router.post('/add/:ticketId', addComment);
+router.post('/add/:ticketId', authenticate, addComment);
 
 
 module.exports = router;
