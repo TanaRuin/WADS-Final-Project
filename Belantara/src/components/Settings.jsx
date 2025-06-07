@@ -1,197 +1,166 @@
 import { useState, useEffect } from 'react';
-import { User, FileText } from 'lucide-react';
-import api from '../api/axiosInstance';
+import { auth, actionCodeSettings } from '../config/firebase';
+import { sendEmailVerification, updateProfile } from 'firebase/auth';
+import { Shield, Mail } from 'lucide-react';
+import EmailVerification from './EmailVerification';
 
 const Settings = () => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [updating, setUpdating] = useState(false);
-
-  const [profileData, setProfileData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    email: '',
-    jobTitle: '',
-    description: ''
-  });
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get('/user/getProfile');
-        const data = res.data.userdata;
-
-        setProfileData(prev => ({
-          ...prev,
-          firstName: data.firstName || '',
-          lastName: data.lastName || '',
-          username: data.username || data.email || '',
-          email: data.email || '',
-          jobTitle: data.jobTitle || '',
-          description: data.description || ''
-        }));
-
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-        setError('Failed to load profile data. Please try again later.');
-      } finally {
-        setLoading(false);
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+      // Show tutorial automatically if email is not verified
+      if (currentUser && !currentUser.emailVerified) {
+        setShowTutorial(true);
       }
-    };
+    });
 
-    fetchProfile();
+    return () => unsubscribe();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfileData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const sendVerificationEmail = async () => {
     try {
-      setUpdating(true);
-      const payload = {
-        description: profileData.description
-      };
-
-      const res = await api.put('/user/updateProfile', payload);
-      alert("Profile updated successfully!");
-      setProfileData(prev => ({ ...prev, ...res.data }));
+      // Store the email for verification
+      window.localStorage.setItem('emailForSignIn', auth.currentUser.email);
+      
+      // Send verification email with action code settings
+      await sendEmailVerification(auth.currentUser, actionCodeSettings);
+      setVerificationSent(true);
+      setShowTutorial(true);
+      alert('Verification email sent! Please check your inbox and click the verification link.');
     } catch (error) {
-      console.error("Failed to update profile:", error);
-      alert("Error updating profile.");
-    } finally {
-      setUpdating(false);
+      console.error('Error sending verification email:', error);
+      alert(error.message);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Please log in to access settings.
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
-      {/* Loading */}
-      {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {/* Error */}
-      {error && !loading && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-          <span className="block sm:inline">{error}</span>
-        </div>
-      )}
-
-      {/* Main Form */}
-      {!loading && !error && (
-        <div className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Info */}
-            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-700 flex items-center mb-6">
-                <User size={20} className="mr-2" />
-                Personal Information
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                  <button
-                    type="button"
-                    className="w-full text-left border border-gray-300 bg-gray-100 text-gray-700 rounded-lg p-3 cursor-default"
-                  >
-                    {profileData.firstName || 'N/A'}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                  <button
-                    type="button"
-                    className="w-full text-left border border-gray-300 bg-gray-100 text-gray-700 rounded-lg p-3 cursor-default"
-                  >
-                    {profileData.lastName || 'N/A'}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                  <button
-                    type="button"
-                    className="w-full text-left border border-gray-300 bg-gray-100 text-gray-700 rounded-lg p-3 cursor-default"
-                  >
-                    {profileData.username || 'N/A'}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <button
-                    type="button"
-                    className="w-full text-left border border-gray-300 bg-gray-100 text-gray-700 rounded-lg p-3 cursor-default"
-                  >
-                    {profileData.email || 'N/A'}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
-                  <button
-                    type="button"
-                    className="w-full text-left border border-gray-300 bg-gray-100 text-gray-700 rounded-lg p-3 cursor-default"
-                  >
-                    {profileData.jobTitle || 'N/A'}
-                  </button>
-                </div>
+    <div className="p-4 space-y-6">
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-2xl font-semibold mb-6">Settings</h2>
+        
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Profile Information</h3>
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <div className="w-20 h-20 rounded-full mr-4 bg-gray-100 border-2 border-gray-200 flex items-center justify-center">
+                {user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profile" 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <Shield size={40} className="text-gray-400" />
+                )}
+              </div>
+              <div>
+                <p className="text-gray-600">Name</p>
+                <p className="font-medium">{user.displayName || 'No name set'}</p>
               </div>
             </div>
-
-            {/* Description */}
-            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-              <h2 className="text-lg font-medium text-gray-700 flex items-center mb-4">
-                <FileText size={20} className="mr-2" />
-                Description
-              </h2>
-              <textarea
-                name="description"
-                value={profileData.description}
-                onChange={handleInputChange}
-                rows="6"
-                className="w-full border border-gray-300 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="Tell us about yourself..."
-              />
+            
+            <div>
+              <p className="text-gray-600">Email</p>
+              <p className="font-medium">{user.email}</p>
             </div>
 
-            {/* Submit */}
-            <div className="flex justify-center sm:justify-end">
-              <button
-                type="submit"
-                disabled={updating}
-                style={{
-                  backgroundColor: updating ? '#93c5fd' : '#3b82f6',
-                  color: 'white'
-                }}
-                className="w-full sm:w-auto px-8 py-3 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium hover:bg-blue-600"
-              >
-                {updating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  "Update Profile"
-                )}
-              </button>
+            <div>
+              <p className="text-gray-600">Account Type</p>
+              <p className="font-medium">Email Account</p>
             </div>
-          </form>
+          </div>
         </div>
+
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-medium mb-4">Security Settings</h3>
+          
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <Shield className="w-5 h-5 text-blue-500 mr-2" />
+                  <h4 className="font-medium">Email Verification</h4>
+                </div>
+                {!user.emailVerified && (
+                  <button
+                    onClick={() => setShowTutorial(!showTutorial)}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    {showTutorial ? 'Hide Tutorial' : 'Show Tutorial'}
+                  </button>
+                )}
+              </div>
+              
+              {user.emailVerified ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-green-700 font-medium">✓ Your email is verified</p>
+                  <p className="text-green-600 text-sm mt-1">Your account has an additional layer of security</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-yellow-700">Your email is not verified</p>
+                    <p className="text-yellow-600 text-sm mt-1">Verify your email to add an extra layer of security to your account</p>
+                  </div>
+
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={sendVerificationEmail}
+                      disabled={verificationSent}
+                      className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      <Mail size={16} className="mr-2" />
+                      {verificationSent ? 'Verification Email Sent' : 'Send Verification Email'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Email Notifications</p>
+                <p className="text-gray-500 text-sm">Receive email updates about your account</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Show verification component if email is not verified and showTutorial is true */}
+      {!user.emailVerified && showTutorial && (
+        <EmailVerification 
+          email={user.email} 
+          verificationSent={verificationSent} 
+        />
       )}
     </div>
   );

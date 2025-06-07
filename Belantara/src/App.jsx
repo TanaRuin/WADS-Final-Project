@@ -4,30 +4,65 @@ import './App.css';
 import AdminPage from './pages/admin';
 import AuthPage from './pages/auth';
 import ResetPasswordPage from './pages/reset';
-import UserPage from './pages/user'; // Make sure this import is correct
+import UserPage from './pages/user';
+import Settings from './components/settings';
+import EmailVerification from './components/EmailVerification';
+import { auth } from './config/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+
+// Protected Route component
+const ProtectedRoute = ({ children }) => {
+  const [user, loading] = useAuthState(auth);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Auth Routes */}
+        {/* Auth Routes - Public */}
         <Route path="/login" element={<AuthPage view="login" />} />
         <Route path="/register" element={<AuthPage view="register" />} />
         <Route path="/forgot" element={<AuthPage view="forgot" />} />
-        
-        {/* Reset Page Route */}
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         
-        {/* Admin Section */}
-        <Route path="/admin/*" element={<AdminPage />} />
+        {/* Email Verification Route - Public */}
+        <Route path="/verify-email" element={<EmailVerification />} />
+
+        {/* Protected Routes */}
+        <Route path="/admin/*" element={
+          <ProtectedRoute>
+            <AdminPage />
+          </ProtectedRoute>
+        } />
         
-        {/* User Section */}
-        <Route path="/user/*" element={<UserPage />} />
+        <Route path="/user/*" element={
+          <ProtectedRoute>
+            <UserPage />
+          </ProtectedRoute>
+        } />
         
-        {/* Legacy Dashboard Route - Redirect to User */}
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        } />
+
+        {/* Redirects */}
         <Route path="/dashboard" element={<Navigate to="/user/dashboard" replace />} />
-        
-        {/* Default Redirect */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
