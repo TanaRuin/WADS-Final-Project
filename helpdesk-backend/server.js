@@ -14,12 +14,9 @@ const attachmentsRoutes = require('./routes/attachmentsRoute');
 const userRoutes = require('./routes/userRoute');
 const dashboardRoutes = require('./routes/dashboardRoute');
 
-
-
 const app = express();
 
 dotenv.config();
-
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
@@ -29,11 +26,13 @@ app.use(express.json());
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: "*",
-  credentials: false,
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

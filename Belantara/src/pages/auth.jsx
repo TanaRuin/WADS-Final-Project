@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import belantaraImage from '../assets/imagesbelantara.png';
 import api from '../api/axiosInstance';
+import { auth, googleProvider } from '../config/firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 function AuthPage({ view = 'login' }) {
   const [currentView, setCurrentView] = useState(view);
@@ -27,20 +29,58 @@ function AuthPage({ view = 'login' }) {
     setError('');
   };
 
-  // Fixed function name to match the button onClick
-  const handleGoogleLogin = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = 'http://localhost:5173/auth/google/callback'; // your redirect URI
-    const scope = encodeURIComponent('openid email profile');
-    const responseType = 'code';
-    const accessType = 'offline';
-    const prompt = 'consent';
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      console.log('Starting Google sign in...');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Google sign in successful');
+      
+      const user = result.user;
+      // Get the ID token
+      const idToken = await user.getIdToken();
+      console.log('Got ID token');
+      
+      // Send the ID token to your backend
+      try {
+        const response = await api.post('/user/google-login', {
+          idToken
+        });
+        console.log('Backend response:', response.data);
 
-    const oauth2Url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}&response_type=${responseType}&scope=${scope}&access_type=${accessType}&prompt=${prompt}`;
+        const { accessToken, userdata } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('accessLevel', userdata.accessLevel);
 
-    window.location.href = oauth2Url;
+        // Navigate based on user access level
+        if (userdata.accessLevel === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/user/dashboard');
+        }
+      } catch (backendError) {
+        console.error('Backend error:', backendError);
+        if (backendError.response) {
+          console.error('Backend error response:', backendError.response.data);
+          setError(backendError.response.data.message || 'Failed to authenticate with server');
+        } else {
+          setError('Failed to connect to authentication server');
+        }
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      if (error.code === 'auth/popup-closed-by-user') {
+        setError('Sign in cancelled. Please try again.');
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('Pop-up blocked by browser. Please enable pop-ups for this site.');
+      } else {
+        setError('Failed to sign in with Google. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLoginSubmit = async (e) => {

@@ -1,5 +1,5 @@
 const  User  = require('../models/Users');  
-const { verifyGoogleToken } = require('../utils/googleAuth');
+const { verifyFirebaseToken } = require('../utils/googleAuth');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const generateTokens = require('../utils/generateToken');
@@ -10,29 +10,30 @@ const { getGoogleUserFromCode } = require('../utils/googleAuth');
 
 const googleLogin = async (req, res) => {
   try {
-    const { code } = req.body;
+    const { idToken } = req.body;
 
-    if (!code) {
-      return res.status(400).json({ message: 'Authorization code is required' });
+    if (!idToken) {
+      return res.status(400).json({ message: 'Firebase ID token is required' });
     }
 
-    const googleUser = await getGoogleUserFromCode(code);
-
-    // Check if user already exists by email or googleId
-    let user = await User.findOne({ 
-      $or: [
-        { email: googleUser.email },
-        { googleId: googleUser.googleId }
-      ]
-    });
+    // Verify the Firebase token
+    const decodedToken = await verifyFirebaseToken(idToken);
+    
+    // Check if user already exists
+    let user = await User.findOne({ email: decodedToken.email });
 
     if (user) {
-      // User exists, just login
+      // User exists, update their Firebase UID if needed
+      if (!user.firebaseUid || user.firebaseUid !== decodedToken.uid) {
+        user.firebaseUid = decodedToken.uid;
+        await user.save();
+      }
+
       const tokens = generateTokens(user);
       
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'Lax',
         maxAge: 7 * 24 * 60 * 60 * 1000
       });
@@ -50,17 +51,22 @@ const googleLogin = async (req, res) => {
       });
     }
 
+    // Create new user if they don't exist
+    const [firstName, ...lastNameParts] = decodedToken.name ? decodedToken.name.split(' ') : ['User', ''];
+    const lastName = lastNameParts.join(' ') || 'User';
+
     const randomPassword = crypto.randomBytes(32).toString('hex');
     const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
     user = new User({
-      firstName: googleUser.firstName,
-      lastName: googleUser.lastName,
-      email: googleUser.email,
-      googleId: googleUser.googleId,
-      username: googleUser.email,
+      userId: uuidv4(),
+      firstName,
+      lastName,
+      email: decodedToken.email,
+      firebaseUid: decodedToken.uid,
+      username: decodedToken.email,
       password: hashedPassword,
-      profileImage: googleUser.profileImage,
+      profileImage: decodedToken.picture,
       accessLevel: 'user'
     });
 
@@ -70,7 +76,7 @@ const googleLogin = async (req, res) => {
 
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'Lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -87,7 +93,7 @@ const googleLogin = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error('Firebase login error:', error);
     res.status(500).json({
       success: false,
       error: error.message

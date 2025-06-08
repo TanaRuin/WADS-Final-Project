@@ -1,50 +1,25 @@
 // utils/googleAuth.js
 require('dotenv').config();
-const { OAuth2Client } = require('google-auth-library');
-const axios = require('axios');
+const admin = require('firebase-admin');
+const serviceAccount = require('../config/serviceAccountKey.json');
 
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'http://localhost:3000/auth/google/callback' // Your redirect URI
-);
-
-// For verifying ID tokens (when you receive an ID token directly from frontend)
-// This is useful for client-side Google Sign-In scenarios
-async function verifyGoogleToken(idToken) {
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
   });
-  const payload = ticket.getPayload();
-  return payload;
 }
 
-// Handle authorization code from server-side OAuth flow
-async function getGoogleUserFromCode(code) {
+async function verifyFirebaseToken(idToken) {
   try {
-    const { tokens } = await client.getToken(code);
-    
-    const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    
-    return {
-      googleId: payload.sub,  // Add this line
-      email: payload.email,
-      firstName: payload.given_name,
-      lastName: payload.family_name,
-      profileImage: payload.picture || null,
-    };
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    return decodedToken;
   } catch (error) {
-    console.error('Error getting Google user from code:', error);
-    throw new Error('Failed to authenticate with Google');
+    console.error('Error verifying Firebase token:', error);
+    throw new Error('Invalid Firebase token');
   }
 }
 
 module.exports = { 
-  verifyGoogleToken, 
-  getGoogleUserFromCode 
+  verifyFirebaseToken 
 };
