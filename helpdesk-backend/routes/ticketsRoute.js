@@ -19,7 +19,7 @@ const { authenticate, authorizeLevel } = require('../middleware/authMiddleware')
 
 /**
  * @openapi
- * /getall:
+ * /api/ticket/getall:
  *   get:
  *     summary: Get all tickets with optional filters
  *     tags: [Tickets]
@@ -54,7 +54,7 @@ router.get('/getall', authenticate, getAllTickets);
 
 /**
  * @openapi
- * /get/{ticketId}:
+ * /api/ticket/get/{ticketId}:
  *   get:
  *     summary: Get a ticket by its ID
  *     tags: [Tickets]
@@ -86,7 +86,7 @@ router.get('/user',authenticate, getTicketsByUserId)
 
 /**
  * @openapi
- * /close/{ticketId}:
+ * /api/ticket/close/{ticketId}:
  *   post:
  *     summary: Close a ticket
  *     tags: [Tickets]
@@ -108,6 +108,19 @@ router.get('/user',authenticate, getTicketsByUserId)
 router.post('/close/:ticketId', authenticate, closeTicket);
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

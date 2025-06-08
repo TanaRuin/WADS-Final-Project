@@ -13,7 +13,7 @@ const { authenticate, authorizeLevel } = require('../middleware/authMiddleware')
 
 /**
  * @openapi
- * /comments/get/{ticketId}:
+ * /api/comments/get/{ticketId}:
  *   get:
  *     summary: Get all comments for a specific ticket
  *     tags:
@@ -53,7 +53,7 @@ router.get('/get/:ticketId', authenticate, getComments);
 
 /**
  * @openapi
- * /comments/add/{ticketId}:
+ * /api/comments/add/{ticketId}:
  *   post:
  *     summary: Add a comment to a specific ticket
  *     tags:

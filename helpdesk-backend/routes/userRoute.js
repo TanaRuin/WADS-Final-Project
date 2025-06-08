@@ -21,7 +21,7 @@ const { authenticate } = require('../middleware/authMiddleware');
 // Auth routes
 /**
  * @swagger
- * /register:
+ * /api/user/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Auth]
@@ -57,11 +57,48 @@ const { authenticate } = require('../middleware/authMiddleware');
  *         description: Failed to register user
  */
 router.post('/register', register);
-
-router.post('/register-admin', registeradmin);
 /**
  * @swagger
- * /login:
+ * /api/user/register-admin:
+ *   post:
+ *     summary: Register a new admin user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - email
+ *               - username
+ *               - password
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Email already in use
+ *       500:
+ *         description: Failed to register user
+ */
+router.post('/register-admin', registeradmin);
+
+/**
+ * @swagger
+ * /api/user/login:
  *   post:
  *     summary: Login user
  *     tags: [Auth]
@@ -97,7 +134,7 @@ router.post('/login', login);
 
 /**
  * @swagger
- * /google-login:
+ * /api/user/google-login:
  *   post:
  *     summary: Login or register user via Google OAuth
  *     tags: [Authentication]
@@ -124,7 +161,7 @@ router.post('/google-login', googleLogin);
 
 /**
  * @swagger
- * /refresh-token:
+ * /api/user/refresh-token:
  *   post:
  *     summary: Refresh access token using refresh token cookie
  *     tags: [Authentication]
@@ -159,7 +196,7 @@ router.post('/logout', logout);
 
 /**
  * @swagger
- * /forgot-password:
+ * /api/user/forgot-password:
  *   post:
  *     summary: Request password reset email
  *     tags: [Password Reset]
@@ -187,7 +224,7 @@ router.post('/forgot-password', forgotPassword);
 
 /**
  * @swagger
- * /reset-password/{token}:
+ * /api/user/reset-password/{token}:
  *   get:
  *     summary: Validate password reset token
  *     tags: [Password Reset]
@@ -208,7 +245,7 @@ router.get('/reset-password/:token', checkResetToken);
 
 /**
  * @swagger
- * /reset-password/{token}:
+ * /api/user/reset-password/{token}:
  *   post:
  *     summary: Reset password using token
  *     tags: [Password Reset]
@@ -247,7 +284,7 @@ router.post('/reset-password/:token', resetPassword);
 
 /**
  * @swagger
- * /getProfile:
+ * /api/user/getProfile:
  *   get:
  *     summary: Get user profile
  *     tags: [User Profile]
@@ -263,7 +300,7 @@ router.get('/getProfile', authenticate, getUserProfile);
 
 /**
  * @swagger
- * /updateProfile:
+ * /api/user/updateProfile:
  *   put:
  *     summary: Update user profile description
  *     tags: [User Profile]
@@ -291,6 +328,12 @@ router.post('/uploadpfp', authenticate, uploadProfilePicture);
 
 
 module.exports = router;
+
+
+
+
+
+
 
 
 
