@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://e2425-wads-l4ccg5-server.csbihub.id/api',
+  baseURL: 'https://e2425-wads-l4ccg5-server.csbihub.id/api-docs',
   withCredentials: false,
 });
 
